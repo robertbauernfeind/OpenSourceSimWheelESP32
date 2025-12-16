@@ -75,6 +75,8 @@ thus not requiring a translation unit.
       required by the public namespace `inputs`.
     - `InputValidation.hpp` and `InputHardware.hpp`:
       required by the internal namespace `internals::inputs`.
+    - `NimBLEWrapper.hpp`:
+      custom wrapper to the underlying NimBLE API.
     - `OutputHardware.hpp`:
       required by the `pixels` subsystem and `SimWheelUI.hpp`.
     - `ServiceMocks.hpp`:
