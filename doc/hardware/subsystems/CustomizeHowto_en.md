@@ -1,6 +1,7 @@
 # How to customize in order to build your own hardware and firmware setup
 
-The whole sim wheel/button box system has been divided into pieces called **subsystems**.
+The whole sim wheel/button box system has been divided
+into pieces called **subsystems**.
 Each subsystem performs a particular function and
 is composed both by hardware and (sometimes) software.
 A description of each subsystem is available below.
@@ -29,14 +30,16 @@ Follow the links to get a detailed description of each subsystem:
   provides input from normally-open switches (push buttons, paddles, etc.)
   and potentiometers (as on/off inputs, only).
 - [Analog clutch subsystem](./AnalogClutchPaddles/AnalogClutchPaddles_en.md):
-  provides input from two potentiometers attached to clutch paddles as analog axes.
+  provides input from two potentiometers attached to clutch paddles
+  as analog axes.
 
 ### About clutch paddles
 
 This project support two kinds of clutch paddles:
 
 - **"Analog" clutch paddles**.
-  Take input from potentiometers exclusively, as described in the *analog clutch subsystem*.
+  Take input from potentiometers exclusively,
+  as described in the *analog clutch subsystem*.
   This is the best choice. Two ADC-capable pins are required.
 
 - **"Digital" clutch paddles**.
@@ -52,7 +55,8 @@ Depending on how much space is available in the wheel's case,
 you have the choice to build all the subsystems in a single perfboard,
 or split them into several perfboards at the cost of extra wiring.
 
-1. Open [DIY layout creator](https://bancika.github.io/diy-layout-creator/) and create a new project file.
+1. Open [DIY layout creator](https://bancika.github.io/diy-layout-creator/)
+   and create a new project file.
 2. Open the provided `.diy` file for each subsystem.
    Copy-paste whatever you need to your own project file.
    Use the "edit" menu since keyboard shortcuts does not seem to work.
@@ -68,13 +72,16 @@ These will help to reduce build time and effort.
 
 Arduino's sketch named
 [**CustomSetup**](../../../src/Firmware/CustomSetup/CustomSetup.ino)
-is the place where you build your own firmware by modifying a few specific lines of code.
-You may want to make a copy first to prevent your customized code from being deleted after updating.
+is the place where you build your own firmware
+by modifying a few specific lines of code.
+You may want to make a copy first to prevent your customized code
+from being deleted after updating.
 To make a working copy:
 
 - Copy the entire folder under a different name.
   Place that copy in the `src/Firmware` folder.
-- Make sure that both the folder and the ".ino" file inside it have exactly the same name.
+- Make sure that both the folder and the ".ino"
+  file inside it have exactly the same name.
 
 Then, there are a few steps:
 
@@ -82,19 +89,28 @@ Then, there are a few steps:
 
 2. Configure inputs:
 
-   As shown for each subsystem, a call to a function in the `inputs` namespace will enable them.
-   You must also assign a unique "input number" to each input, **in the range from 0 to 63**.
-   If you fail to provide valid input numbers, the firmware will not boot up.
-   Each input number corresponds to a certain position in a pin header in your hardware design.
+   As shown for each subsystem, a call to a
+   function in the `inputs` namespace will enable them.
+   You must also assign a unique "input number" to each input,
+   **in the range from 0 to 63**.
+   If you fail to provide valid input numbers,
+   the firmware will not boot up.
+   Each input number corresponds to a certain position
+   in a pin header in your hardware design.
    Some input numbers have a certain meaning in the hosting PC.
 
-3. Map certain input numbers to specific functions using the `inputHub` namespace, as explained below.
-   Edit the body of `simWheelSetup()` and place the required calls at the end of it.
-   All of those mappings are optional, but take care not to build a non-functional firmware.
+3. Map certain input numbers to specific functions
+   using the `inputHub` namespace, as explained below.
+   Edit the body of `simWheelSetup()`
+   and place the required calls at the end of it.
+   All of those mappings are optional,
+   but take care not to build a non-functional firmware.
    Do not assign two functions to the same input numbers.
-   Where available, do not use a combination of input numbers which can not be activated at the same time.
+   Where available, do not use a combination of input numbers
+   which can not be activated at the same time.
    Do not map a specific function to non-existent input numbers.
-   If you choose not to map those specific functions, they are still available thanks to the companion app.
+   If you choose not to map those specific functions,
+   they are still available thanks to the companion app.
 
 *Note:* "..." means other code not explicitly shown.
 
@@ -130,8 +146,8 @@ the working mode of the DPAD will move to the next one:
 navigation controls, regular buttons and back to the first mode.
 There is no point on this if there is no DPAD.
 
-Assign a combination of input numbers to activate this function by placing a call to
-`inputHub::dpad::cycleWorkingModeInputs()`.
+Assign a combination of input numbers to activate this function
+by placing a call to `inputHub::dpad::cycleWorkingModeInputs()`.
 There is one parameter: a sequence of input numbers between braces.
 All the inputs have to be active at the same time, and none of the others.
 
@@ -165,7 +181,8 @@ void simWheelSetup()
 }
 ```
 
-Now, those input numbers may work as clutch paddles depending on user preferences.
+Now, those input numbers may work as clutch paddles
+depending on user preferences.
 
 It works the same for analog clutch paddles,
 but no existing input number is required,
@@ -181,7 +198,8 @@ void simWheelSetup()
 }
 ```
 
-Now, the analog clutch paddles may work as input numbers 45 and 46 depending on user preferences.
+Now, the analog clutch paddles may work as input numbers 45 and 46
+depending on user preferences.
 
 ### Bite point calibration
 
@@ -239,8 +257,8 @@ launch control (right paddle is master)
 and back to the first mode.
 There is no point on this if there are no clutch paddles.
 
-Assign a combination of input numbers to activate this function by placing a call to
-`inputHub::clutch::cycleWorkingModeInputs()`.
+Assign a combination of input numbers to activate this function
+by placing a call to `inputHub::clutch::cycleWorkingModeInputs()`.
 There is one parameter: a sequence of input numbers between braces.
 All the inputs have to be active at the same time, and none of the others.
 For example:
@@ -261,8 +279,8 @@ the working mode of the "ALT" buttons will move to the next one:
 alternate mode, regular buttons and back to the first mode.
 There is no point on this if there are no "ALT" buttons.
 
-Assign a combination of input numbers to activate this function by placing a call to
-`inputHub::altButtons::cycleWorkingModeInputs()`.
+Assign a combination of input numbers to activate this function
+by placing a call to `inputHub::altButtons::cycleWorkingModeInputs()`.
 There is one parameter: a sequence of input numbers between braces.
 All the inputs have to be active at the same time, and none of the others.
 
@@ -288,11 +306,13 @@ This project provides several (exclusive) connectivity choices:
   from [h2zero](https://github.com/h2zero).
   This is the default.
   If you are happy with this, ignore this section.
+  It works on any ESP32 DevKit board and ESP32-Arduino core version.
 
-- Bluetooth Low Energy using the NimBLE stack wrapper from the ESP32-Arduino core.
-  Currently not used (except for a test unit), but available.
-  This stack requires more flash memory compared to *h2zero/NimBLE-Arduino* (about 500 KB).
-  If you have issues with *NimBLE*, this is a workaround.
+- Bluetooth Low Energy (BLE) using the same *NimBLE* stack
+  but without a wrapper (no additional libraries required).
+  Requires ESP32-Arduino **core version 3.3.0 or later**.
+  **Does not work** with "pure" ESP32 boards (does not compile).
+  This will be fixed on ESP32-Arduino core version 4.0.0.
 
 - Universal Serial Bus (USB).
 
@@ -306,14 +326,15 @@ This project provides several (exclusive) connectivity choices:
 In order to use any of them:
 
 - Edit the file **"includes.txt"** at your sketch folder.
-  Replace the text "hid_NimBLE.cpp" with a filename chosen from this table:
+  Replace the file name in this table with another from
+  the same table.
 
-  | Connectivity | Stack         | Filename       |
-  | ------------ | ------------- | -------------- |
-  | BLE          | NimBLE        | hid_NimBLE.cpp |
-  | BLE          | ESP32-Arduino | hid_ESPBLE.cpp |
-  | USB          | ESP32-Arduino | hid_USB.cpp    |
-  | Dummy        | none          | hid_dummy.cpp  |
+  | Connectivity | Stack   | Wrapper               | *Filename*     |
+  | ------------ | ------- | --------------------- | -------------- |
+  | BLE          | NimBLE  | none                  | hid_BLE.cpp    |
+  | BLE          | NimBLE  | h2zero/NimBLE-Arduino | hid_h2zero.cpp |
+  | USB          | TinyUSB | ESP32-Arduino core    | hid_USB.cpp    |
+  | Dummy        | none    | none                  | hid_dummy.cpp  |
 
   Those file names are case-sensitive if you have Linux or Mac.
 
@@ -325,23 +346,30 @@ In order to use any of them:
 If you go for a purely wired USB implementation:
 
 - Set *USB-Mode* to "USB-OTG (TinyUSB)" in Arduino-IDE (board configuration).
-- This implementation **won't work** if you set *USB-Mode* to "Hardware CDC and JTAG"
+- This implementation **won't work**
+  if you set *USB-Mode* to "Hardware CDC and JTAG"
   and *USB CDC on Boot* to "Enabled".
-  However, this is the only way to redirect serial output to the USB serial interface.
+  However, this is the only way to redirect
+  serial output to the USB serial interface.
   Use this configuration if you need to see error messages and
   your board doesn't have a secondary USB-to-UART connector.
-- There is no sense in using a battery-operated design if you have USB power available.
-  For this reason, automatic shutdown is not available within this implementation.
-- Note that you can not have both Bluetooth and USB at the same time in the same device.
+- There is no sense in using a battery-operated design
+  if you have USB power available.
+  For this reason, automatic shutdown is not available
+  within this implementation.
+- Note that you can not have both Bluetooth
+  and USB at the same time in the same device.
 
 ### Security lock
 
 For security concerns,
 the user can lock or unlock configuration changes coming from any PC application
 (including the companion app).
-This is a security precaution to stop unauthorized configuration modifications caused by rogue programs.
+This is a security precaution to stop unauthorized configuration
+modifications caused by rogue programs.
 
-Assign a combination of input numbers to activate this function by placing a call to
+Assign a combination of input numbers
+to activate this function by placing a call to
 `inputHub::securityLock::cycleWorkingModeInputs()`.
 There is one parameter: a sequence of input numbers between braces.
 All the inputs have to be active at the same time, and none of the others.
@@ -403,11 +431,14 @@ This method will set the following input map:
 
 #### inputMap::set() with three arguments
 
-Make calls to `inputMap::set()` with the following parameters (from left to right):
+Make calls to `inputMap::set()` with the following parameters
+(from left to right):
 
 1. A firmware-defined input number: must be assigned to the input hardware.
-2. A user-defined input number to be reported when *alternate mode* is **not** engaged.
-3. A user-defined input number to be reported when *alternate mode* **is** engaged.
+2. A user-defined input number to be reported
+   when *alternate mode* is **not** engaged.
+3. A user-defined input number to be reported
+   when *alternate mode* **is** engaged.
 
 Make as many calls as you need.
 For example:
@@ -443,12 +474,14 @@ When:
 
 #### inputMap::set() with two arguments
 
-Make calls to `inputMap::set()` with the following parameters (from left to right):
+Make calls to `inputMap::set()` with the following parameters
+(from left to right):
 
 1. A firmware-defined input number: must be assigned to the input hardware.
    This is also the user-defined input number to be reported
    when *alternate mode* **is not** engaged.
-2. A user-defined input number to be reported when *alternate mode* **is** engaged.
+2. A user-defined input number to be reported when *alternate mode*
+   **is** engaged.
 
 This is a shortcut. Make as many calls as you need.
 
@@ -515,7 +548,8 @@ they will be reported as buttons 1 and 2 again.
 
 ## Build your design into a perfboard
 
-Some of the circuit designs may show very small resistors and diodes which does not fit the real ones.
+Some of the circuit designs may show very small resistors
+and diodes which does not fit the real ones.
 This is not a mistake.
 They must be placed in "vertical" layout,
 so they lie in a minimal surface of the perfboard.

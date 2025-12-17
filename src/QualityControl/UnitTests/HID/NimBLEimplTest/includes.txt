@@ -1,4 +1,4 @@
-hid_NimBLE.cpp
+hid_h2zero.cpp
 hidCommon.cpp
 hidTestHelper.cpp
 telemetry.cpp

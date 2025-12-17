@@ -3,5 +3,5 @@ pixels.cpp
 telemetry.cpp
 ui.cpp
 hidCommon.cpp
-hid_NimBLE.cpp
+hid_h2zero.cpp
 HAL.cpp

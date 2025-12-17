@@ -7,14 +7,16 @@ Indispensable:
 - [Arduino IDE](https://www.arduino.cc/en/software).
   Choose a stable release and follow instructions.
   This project has been successfully compiled with **version 2.3.6**.
+
 - Official [Arduino-ESP32 support package](https://docs.espressif.com/projects/arduino-esp32/en/latest/getting_started.html).
   Follow [this link](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) for installation instructions.
   This project has been successfully tested with **version 3.2.0**.
-- Indispensable [Arduino libraries](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries) for this project.
-  Install their dependencies as well.
-  - [NimBLE-Arduino](https://www.arduino.cc/reference/en/libraries/nimble-arduino/).
+
+- [Arduino library](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries):
+  - [h2zero/NimBLE-Arduino](https://www.arduino.cc/reference/en/libraries/nimble-arduino/).
     This project has been successfully tested with **version 2.3.5**.
     Any version prior to version 2.2.0 will not work.
+
 - [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2).
   Already installed in Windows. Not strictly needed in Linux.
 
@@ -37,8 +39,8 @@ Recommended:
 
 - Any joystick test application able to display 128 buttons:
 
-  - [Planet pointy's joystick test application](http://www.planetpointy.co.uk/joystick-test-application/) (for Windows 10).
-    **Does not work in Windows 11**.
+  - [Planet pointy's joystick test application](http://www.planetpointy.co.uk/joystick-test-application/)
+    (for Windows 10). **Does not work in Windows 11**.
 
   - [pygame-joystick-test](https://github.com/denilsonsa/pygame-joystick-test).
     Works in any operating system, but requires Python.
@@ -62,8 +64,10 @@ Recommended:
 
   - [EasyEDA Pro](https://pro.easyeda.com/editor).
     This is a free tool and very easy to learn.
-    You can install it locally or run it online (a free account may be required).
-    From this tool, you can order a PCB (and optional assembly) to [JLCPCB](https://jlcpcb.com/).
+    You can install it locally or run it online
+    (a free account may be required).
+    From this tool, you can order a PCB (and optional assembly)
+    to [JLCPCB](https://jlcpcb.com/).
 
   - [KiCAD](https://www.kicad.org/).
     Free and open source.
@@ -86,7 +90,8 @@ Recommended:
 
 ## Skills
 
-There are lots of resources out in the Internet to learn those skills. Just use your favorite search engine.
+There are lots of resources out in the Internet to learn those skills.
+Just use your favorite search engine.
 
 Indispensable:
 
@@ -98,6 +103,7 @@ Recommended:
 
 - [Ohm's law](https://en.wikipedia.org/wiki/Ohm%27s_law).
 - Basics of switches, resistors, diodes and transistors.
-- Role of [pull-up](https://en.wikipedia.org/wiki/Pull-up_resistor) and pull-down resistors.
+- Role of [pull-up](https://en.wikipedia.org/wiki/Pull-up_resistor)
+  and pull-down resistors.
 - Basics of C and C++ programming languages.
 - [How to order a custom PCB](https://duckduckgo.com/?q=how+to+order+a+custom+pcb&ia=web)

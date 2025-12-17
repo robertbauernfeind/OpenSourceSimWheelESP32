@@ -1,9 +1,10 @@
 /**
- * @file hid_NimBLE.cpp
+ * @file hid_h2zero.cpp
  *
  * @author Ángel Fernández Pineda. Madrid. Spain.
  * @date 2022-02-27
- * @brief Implementation of a HID device through the NimBLE stack
+ * @brief Implementation of a HID device via the
+ *        h2zero/NimBLE-Arduino wrapper
  *
  * @copyright Licensed under the EUPL
  *
