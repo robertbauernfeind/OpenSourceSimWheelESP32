@@ -79,12 +79,14 @@ LEDStrip::LEDStrip(
         .mem_block_symbols = 128,
         .trans_queue_depth = 1,
         .intr_priority = 0,
-        .flags{
+        .flags = {
             .invert_out = 0,
             .with_dma = 1,
             .io_loop_back = 0,
             .io_od_mode = 0,
-            .allow_pd = 0}};
+            .allow_pd = 0,
+            .init_level = 0,
+        }};
     if (useLevelShift)
         tx_config.flags.io_od_mode = 1;
     rmtHandle = nullptr;
