@@ -136,7 +136,6 @@ void internals::hid::begin(
 void internals::hid::reset()
 {
     internals::hid::common::onReset(inputReportData);
-    // if (BLEAdvertising::connected())
     BLEHIDService::input_report.notify();
 }
 
@@ -157,20 +156,16 @@ void internals::hid::reportInput(
         leftAxis,
         rightAxis,
         clutchAxis);
-    if (BLEAdvertising::connected())
-        BLEHIDService::input_report.notify();
+    BLEHIDService::input_report.notify();
 }
 
 void internals::hid::reportBatteryLevel(int level)
 {
-    // if (BLEAdvertising::connected())
-    //     {
     if (level > 100)
         level = 100;
     else if (level < 0)
         level = 0;
     BLEBatteryService::batteryLevel.set(level);
-    // }
 }
 
 void internals::hid::reportChangeInConfig()

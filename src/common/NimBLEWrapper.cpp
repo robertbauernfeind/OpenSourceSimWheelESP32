@@ -45,6 +45,7 @@ extern "C" void ble_store_config_init(void);
 //------------------------------------------------------------------------------
 
 #define BLE_APPEARANCE_GAMEPAD 0x03C4
+// static constexpr const uint8_t PREFERRED_PHY = BLE_HCI_LE_PHY_2M_PREF_MASK;
 
 //------------------------------------------------------------------------------
 // ApiResult
@@ -106,14 +107,9 @@ void BLEAdvertising::start()
 
 int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
 {
+    // Note: most events are handled just for debugging purposes
     switch (event->type)
     {
-    case BLE_GAP_EVENT_DISCONNECT:
-        log_i("GAP event: disconnection");
-        _connected = false;
-        if (onConnectionStatus)
-            onConnectionStatus(false);
-        break;
     case BLE_GAP_EVENT_CONNECT:
         log_i("GAP event: connection");
         // Notes:
@@ -124,15 +120,48 @@ int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
         if ((event->connect.status) && (onConnectionStatus))
             onConnectionStatus(false);
         break;
+    case BLE_GAP_EVENT_DISCONNECT:
+        log_i("GAP event: disconnection");
+        _connected = false;
+        if (onConnectionStatus)
+            onConnectionStatus(false);
+        break;
+    case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+        log_d("GAP event: BLE_GAP_EVENT_CONN_UPDATE_REQ");
+        break;
+    case BLE_GAP_EVENT_L2CAP_UPDATE_REQ:
+        log_d("GAP event: BLE_GAP_EVENT_L2CAP_UPDATE_REQ");
+        break;
+    case BLE_GAP_EVENT_TERM_FAILURE:
+        log_d("GAP event: BLE_GAP_EVENT_TERM_FAILURE");
+        break;
+    case BLE_GAP_EVENT_ADV_COMPLETE:
+        log_d("GAP event: advertising complete");
+        break;
+    case BLE_GAP_EVENT_ENC_CHANGE:
+        log_d("GAP event: BLE_GAP_EVENT_ENC_CHANGE");
+        break;
+    case BLE_GAP_EVENT_PASSKEY_ACTION:
+        log_d("GAP event: BLE_GAP_EVENT_PASSKEY_ACTION");
+        break;
+    case BLE_GAP_EVENT_SUBSCRIBE:
+        log_d("GAP event: subscription to chr %d, reason %d",
+              event->subscribe.attr_handle,
+              event->subscribe.reason);
+        break;
+    case BLE_GAP_EVENT_MTU:
+        log_d("GAP event: MTU change");
+        break;
     case BLE_GAP_EVENT_LINK_ESTAB:
         if (event->link_estab.status)
-            log_i("BLE_GAP_EVENT_LINK_ESTAB event status %d", event->link_estab.status);
+            log_i("Gap event: link establishment failed with status %d",
+                  event->link_estab.status);
         else
         {
             log_i("GAP event: link established");
-            _connected = true;
             if (onConnectionStatus)
                 onConnectionStatus(true);
+            _connected = true;
         }
         break;
     case BLE_GAP_EVENT_REPEAT_PAIRING:
@@ -144,8 +173,12 @@ int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
             "BLE: Unable to delete old bond");
         ble_store_util_delete_peer(&conn_info.peer_id_addr);
         return BLE_GAP_REPEAT_PAIRING_RETRY; // continue with the pairing protocol
+    case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
+        log_i("GAP event: new PHY: rx=%d, tx=%d",
+              event->phy_updated.rx_phy,
+              event->phy_updated.tx_phy);
     default:
-        log_i("GAP event: %d", event->type);
+        log_d("GAP event: %d", event->type);
         break;
     }
     return 0;
@@ -154,15 +187,6 @@ int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
 void BLEAdvertising::init()
 {
     ApiResult rc;
-    // TO-DO
-    // Configure preferred PHY
-    // static constexpr const uint8_t PREFERRED_PHY = BLE_GAP_LE_PHY_2M_MASK;
-    // int rc = ble_gap_set_prefered_default_le_phy(PREFERRED_PHY, PREFERRED_PHY);
-    // if (rc!=0)
-    // {
-    //     log_d("ble_gap_set_prefered_default_le_phy() failed with code %d",rc);
-    //     // No need to abort
-    // }
 
     // Configure data to include in subsequent advertisements.
     // Advertised data:
@@ -272,6 +296,13 @@ void BLEDevice::init_gatt_server()
 {
     ApiResult rc;
 
+    // Configure preferred PHY
+    // DISABLED: does not work
+    // rc = ble_gap_set_prefered_default_le_phy(PREFERRED_PHY, PREFERRED_PHY);
+    // if (rc.code != BLE_HS_EDONE)
+    //     rc.log_if("ble_gap_set_prefered_default_le_phy() failed");
+
+    // Initialize GAP and GATT services
     ble_svc_gap_init();
     ble_svc_gatt_init();
     BLEBatteryService::init();
@@ -363,6 +394,24 @@ void BLEDesc2908::set(uint8_t report_id, HIDReportType report_type)
 
 void BLECharacteristic::notify() const
 {
+    //***************************************************************
+    // Sloppy workaround for a bug in NimBLE
+    // DISABLED: the processing delay in ble_gap_event_fn()
+    // seems to be enough.
+    //***************************************************************
+    // When the device is already paired, a call to ble_gatts_chr_updated()
+    // from another thread causes subsequent subscriptions
+    // to other characteristics to be ignored.
+    // This affects Microsoft Windows only.
+    // static bool first_call = true;
+    // if (first_call)
+    // {
+    //     // A delay is introduced to give time to the
+    //     // NimBLE thread to process the remaining GAP events
+    //     first_call = false;
+    //     vTaskDelay(pdMS_TO_TICKS(500));
+    // }
+    //***************************************************************
     assert(
         (attr_handle != INVALID_HANDLE) &&
         "BLE: notify called() but attr_handle not set");
