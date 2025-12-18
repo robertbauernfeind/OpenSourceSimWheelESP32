@@ -33,6 +33,7 @@ header_files=$(find "$INCLUDE_PATH" -type f -name "*.h??")
 get_required_links() {
     local path="$1"
     local links=()
+    local uses_custom_ble_wrapper=false
     file_content=$(<"$path/$INCLUDES_FILE")
     if [ -n "$file_content" ] && [ "${file_content: -1}" != $'\n' ]; then
         file_content="$file_content"$'\n'
@@ -40,11 +41,19 @@ get_required_links() {
     while IFS= read -r line; do
         line=$(echo "$line" | sed 's/\r//;s/^[[:space:]]*//;s/[[:space:]]*$//')
         if [[ -n "$line" ]]; then
-            links+=("$COMMON_PATH/$line")
+            if [ "$line" = "hid_BLE.cpp" ]; then
+                uses_custom_ble_wrapper=true
+            fi
+            if [ "$line" != "NimBLEWrapper.cpp" ]; then
+                links+=("$COMMON_PATH/$line")
+            fi
         fi
     done <<<"$file_content"
     echo "${links[@]}"
     echo $header_files
+    if [ "$uses_custom_ble_wrapper" = true ]; then
+        echo "$COMMON_PATH/NimBLEWrapper.cpp"
+    fi
 }
 
 get_sketch_folders() {
@@ -67,7 +76,7 @@ for folder in $SKETCH_FOLDERS; do
             if test -f "$link_spec"; then
                 if ln -s "$link_spec" "$target" 2>/dev/null; then
                     :
-                    # echo "Symlink created: $link_spec -> $target"
+                    echo "Symlink created: $link_spec -> $target"
                 else
                     if cp -f "$link_spec" "$target" 2>/dev/null; then
                         chmod -w $target 2>/dev/null
