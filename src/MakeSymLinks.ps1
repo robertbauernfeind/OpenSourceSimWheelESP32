@@ -162,6 +162,29 @@ function Get-IncludesFileContent {
     }
 }
 
+function Push-AuxiliaryFiles {
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [string]$original
+    )
+    begin {
+        $uses_custom_ble_wrapper = $false
+    }
+    process {
+        if ($original.Equals("hid_BLE.cpp")) {
+            $uses_custom_ble_wrapper = $true
+        }
+        if (-not ($original.Equals("NimBLEWrapper.cpp"))) {
+            $original
+        }
+    }
+    end {
+        if ($uses_custom_ble_wrapper) {
+            "NimBLEWrapper.cpp"
+        }
+    }
+}
+
 <#############################################################################
 # MAIN
 #############################################################################>
@@ -220,6 +243,7 @@ try {
 
         Write-Info "Creating links to filenames found in '$_includesFile'"
         $includesContent = Get-IncludesFileContent -LiteralPath $specFile
+        $includesContent = $includesContent | Push-AuxiliaryFiles
         if ($includesContent.Length -eq 0) {
             Write-Warning "'$_includesFile' is empty"
         }
