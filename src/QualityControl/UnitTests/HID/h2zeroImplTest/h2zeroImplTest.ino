@@ -1,5 +1,5 @@
 /**
- * @file NimBLEimplTest.ino
+ * @file h2zeroImplTest.ino
  *
  * @author Ángel Fernández Pineda. Madrid. Spain.
  * @date 2022-02-27
@@ -9,5 +9,5 @@
  *
  */
 
-#define HID_TESTER "NimBLEimplTest"
+#define HID_TESTER "h2zeroImplTest"
 #include "hidTestHelper.cpp"
