@@ -1,4 +1,25 @@
-# Change log
+# Change log (and release notes)
+
+## 7.7.9
+
+- BLE HID has been implemented on the NimBLE stack without any wrapper.
+  It is available in the file `hid_BLE.cpp`,
+  but it is not enforced because it does not compile
+  on "pure" ESP32 boards yet
+  (it will when ESP32-Arduino core version 4.0.0 is released).
+- The file `hid_NimBLE.cpp` has been renamed to `hid_h2zero.cpp` to
+  make clear that this implementation is based on h2zero's NimBLE wrapper.
+  This continues to be the default implementation
+  as it works with any ESP32 board.
+- The file `hid_ESPBLE.cpp` has been removed.
+  This means the the BLE HID implementation based on the
+  ESP32-Arduino wrapper is not available anymore.
+- Those changes are explained in
+  [this discussion](https://github.com/afpineda/OpenSourceSimWheelESP32/discussions/30).
+- You must run the
+  [sources setup procedure](./firmware/sourcesSetup_en.md)
+  **again**.
+- Documentation has been updated accordingly.
 
 ## 7.7.8
 
