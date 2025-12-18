@@ -76,7 +76,7 @@ for folder in $SKETCH_FOLDERS; do
             if test -f "$link_spec"; then
                 if ln -s "$link_spec" "$target" 2>/dev/null; then
                     :
-                    echo "Symlink created: $link_spec -> $target"
+                    # echo "Symlink created: $link_spec -> $target"
                 else
                     if cp -f "$link_spec" "$target" 2>/dev/null; then
                         chmod -w $target 2>/dev/null
