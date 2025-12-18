@@ -166,20 +166,15 @@ private:
  */
 struct BLEDevice
 {
+    friend class BLEAdvertising;
+
     /**
      * @brief Initialization status
-     * @warning Exposed for efficiency. Do not overwrite.
+     *
+     * @return true If initialized
+     * @return false If not initialized
      */
-    inline static bool initialized = false;
-
-    /**
-     * @brief Stack availability
-     * @warning Exposed for efficiency. Do not overwrite.
-     */
-    inline static bool ready = false;
-
-    /// @brief Bluetooth addres type configured for this device
-    inline static uint8_t address_type = 0;
+    static bool initialized() { return _initialized; };
 
     /**
      * @brief Initialize the BLE stack
@@ -189,6 +184,15 @@ struct BLEDevice
     static void init(const std::string &deviceName);
 
 private:
+    /// @brief Bluetooth address type configured for this device
+    inline static uint8_t address_type = 0;
+
+    /// @brief BLE controller availability
+    inline static bool ready = false;
+
+    /// @brief Initialization state
+    inline static bool _initialized = false;
+
     /// @brief Initialize the GATT server
     static void init_gatt_server();
 
@@ -366,7 +370,20 @@ struct BLECharacteristic
      */
     void notify() const;
 
+    /**
+     * @brief Set the subscription status if it corresponds to this
+     *        characteristic
+     * @note Ignored if the attribute handle
+     *       does not match @p requested_attr_handle
+     *
+     * @param requested_attr_handle Attribute handle.
+     * @param status True on subscription, false otherwise
+     */
+    void setSubscription_if(uint16_t requested_attr_handle, bool status);
+
 protected:
+    /// @brief Subscription status
+    bool subscribed = false;
     /**
      * @brief Attribute handle
      * @warning Must be filled by descendant classes
@@ -426,6 +443,21 @@ struct BLEBatteryService
 
     /// @brief Initialize
     static void init();
+
+    /**
+     * @brief Handle characteristic subscriptions
+     * @note Called from the GAP server when the client
+     *       subscribes or cancels subscription to a characteristic.
+     *
+     * @param attr_handle Attribute handle
+     * @param yesOrNo True on subscription, false otherwise.
+     */
+    static void onSubscriptionChange(
+        uint16_t attr_handle,
+        bool yesOrNo)
+    {
+        batteryLevel.setSubscription_if(attr_handle, yesOrNo);
+    }
 
 private:
     inline static ble_gatt_chr_def chr_set[2] = {0};
@@ -680,6 +712,21 @@ struct BLEHIDService
 
     /// @brief Initialize
     static void init();
+
+    /**
+     * @brief Handle characteristic subscriptions
+     * @note Called from the GAP server when the client
+     *       subscribes or cancels subscription to a characteristic.
+     *
+     * @param attr_handle Attribute handle
+     * @param yesOrNo True on subscription, false otherwise.
+     */
+    static void onSubscriptionChange(
+        uint16_t attr_handle,
+        bool yesOrNo)
+    {
+        input_report.setSubscription_if(attr_handle, yesOrNo);
+    }
 
 private:
     inline static ble_gatt_chr_def chr_set[4 + HID_REPORT_COUNT + 1] = {0};

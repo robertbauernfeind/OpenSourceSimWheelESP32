@@ -87,6 +87,7 @@ int ApiResult::to_attr_rc(bool readOrWrite) const noexcept
 void BLEAdvertising::start()
 {
     assert(BLEDevice::ready);
+    assert(!_connected);
     if (!ble_gap_adv_active())
     {
         // Don't know why we have to initialize
@@ -145,10 +146,20 @@ int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
         log_d("GAP event: BLE_GAP_EVENT_PASSKEY_ACTION");
         break;
     case BLE_GAP_EVENT_SUBSCRIBE:
-        log_d("GAP event: subscription to chr %d, reason %d",
+    {
+        log_i("GAP event: subscription to chr %d, reason %d",
               event->subscribe.attr_handle,
               event->subscribe.reason);
-        break;
+        bool yesOrNo = event->subscribe.cur_notify |
+                       event->subscribe.cur_indicate;
+        BLEBatteryService::onSubscriptionChange(
+            event->subscribe.attr_handle,
+            yesOrNo);
+        BLEHIDService::onSubscriptionChange(
+            event->subscribe.attr_handle,
+            yesOrNo);
+    }
+    break;
     case BLE_GAP_EVENT_MTU:
         log_d("GAP event: MTU change");
         break;
@@ -243,7 +254,7 @@ void BLEAdvertising::init()
 
 void BLEDevice::init(const std::string &deviceName)
 {
-    assert(!initialized);
+    assert(!_initialized);
     // Initialize flash memory
     // (required to store PHY calibration data)
     esp_err_t ret = nvs_flash_init();
@@ -288,7 +299,7 @@ void BLEDevice::init(const std::string &deviceName)
     // Using active wait to avoid having a single-use semaphore.
     while (!ready)
         ble_npl_time_delay(1);
-    initialized = true;
+    _initialized = true;
     log_i("BLEDevice::init() done");
 }
 
@@ -383,7 +394,6 @@ ble_gatt_dsc_def BLEDesc2908::definition()
 
 void BLEDesc2908::set(uint8_t report_id, HIDReportType report_type)
 {
-    assert(!BLEDevice::initialized);
     _report_id = report_id;
     _report_type = report_type;
 }
@@ -394,29 +404,37 @@ void BLEDesc2908::set(uint8_t report_id, HIDReportType report_type)
 
 void BLECharacteristic::notify() const
 {
-    //***************************************************************
-    // Sloppy workaround for a bug in NimBLE
-    // DISABLED: the processing delay in ble_gap_event_fn()
-    // seems to be enough.
-    //***************************************************************
-    // When the device is already paired, a call to ble_gatts_chr_updated()
-    // from another thread causes subsequent subscriptions
-    // to other characteristics to be ignored.
-    // This affects Microsoft Windows only.
-    // static bool first_call = true;
-    // if (first_call)
-    // {
-    //     // A delay is introduced to give time to the
-    //     // NimBLE thread to process the remaining GAP events
-    //     first_call = false;
-    //     vTaskDelay(pdMS_TO_TICKS(500));
-    // }
-    //***************************************************************
     assert(
         (attr_handle != INVALID_HANDLE) &&
-        "BLE: notify called() but attr_handle not set");
-    log_d("BLE: notify handle %d", attr_handle);
-    ble_gatts_chr_updated(attr_handle);
+        "BLE: notify() called but attr_handle not set");
+    if (subscribed)
+    {
+        // Important note:
+        // ble_gatts_chr_updated() must not be called
+        // if the client is not subscribed due to a bug
+        // in NimBLE.
+        log_d("BLE: notify handle %d", attr_handle);
+        ble_gatts_chr_updated(attr_handle);
+    }
+    else
+        log_d("BLE: notify() ignored on attr handle %d (not subscribed)",
+              attr_handle);
+}
+
+void BLECharacteristic::setSubscription_if(
+    uint16_t requested_attr_handle,
+    bool status)
+{
+    assert(
+        (attr_handle != INVALID_HANDLE) &&
+        "BLE: setSubscription_if() called but attr_handle not set");
+    if (requested_attr_handle == attr_handle)
+    {
+        subscribed = status;
+        log_d("BLE: new notification status %d on attr handle %d",
+              status,
+              attr_handle);
+    }
 }
 
 //------------------------------------------------------------------------------

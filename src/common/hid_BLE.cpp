@@ -97,7 +97,7 @@ void internals::hid::begin(
     uint16_t vendorID,
     uint16_t productID)
 {
-    if (!BLEDevice::initialized)
+    if (!BLEDevice::initialized())
     {
         // Auto-power-off initialization
         if (enableAutoPowerOff)
