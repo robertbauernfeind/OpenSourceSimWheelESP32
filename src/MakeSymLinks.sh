@@ -34,6 +34,8 @@ get_required_links() {
     local path="$1"
     local links=()
     local uses_custom_ble_wrapper=false
+    local uses_hid_nimble=false
+    local uses_hid_h2zero=false
     file_content=$(<"$path/$INCLUDES_FILE")
     if [ -n "$file_content" ] && [ "${file_content: -1}" != $'\n' ]; then
         file_content="$file_content"$'\n'
@@ -44,13 +46,22 @@ get_required_links() {
             if [ "$line" = "hid_BLE.cpp" ]; then
                 uses_custom_ble_wrapper=true
             fi
-            if [ "$line" != "NimBLEWrapper.cpp" ]; then
+            if [ "$line" = "hid_h2zero.cpp" ]; then
+                uses_hid_h2zero=true
+            fi
+            if [ "$line" = "hid_NimBLE.cpp" ]; then
+                uses_hid_nimble=true
+            fi
+            if [ "$line" != "NimBLEWrapper.cpp" ] && [ "$line" != "hid_NimBLE.cpp" ]; then
                 links+=("$COMMON_PATH/$line")
             fi
         fi
     done <<<"$file_content"
     echo "${links[@]}"
     echo $header_files
+    if [ "$uses_hid_nimble" = true ] && [ "$uses_hid_h2zero" = false ]; then
+        echo "$COMMON_PATH/hid_h2zero.cpp"
+    fi
     if [ "$uses_custom_ble_wrapper" = true ]; then
         echo "$COMMON_PATH/NimBLEWrapper.cpp"
     fi
@@ -76,7 +87,7 @@ for folder in $SKETCH_FOLDERS; do
             if test -f "$link_spec"; then
                 if ln -s "$link_spec" "$target" 2>/dev/null; then
                     :
-                    # echo "Symlink created: $link_spec -> $target"
+                    echo "Symlink created: $link_spec -> $target"
                 else
                     if cp -f "$link_spec" "$target" 2>/dev/null; then
                         chmod -w $target 2>/dev/null

@@ -139,7 +139,6 @@ function New-SymLink {
     }
 }
 
-
 function Get-IncludesFileContent {
     param (
         [Parameter(Mandatory)]
@@ -169,16 +168,29 @@ function Push-AuxiliaryFiles {
     )
     begin {
         $uses_custom_ble_wrapper = $false
+        $uses_hid_nimble = $false
+        $uses_hid_h2zero = $false
     }
     process {
         if ($original.Equals("hid_BLE.cpp")) {
             $uses_custom_ble_wrapper = $true
         }
+        if ($original.Equals("hid_NimBLE.cpp")) {
+            $uses_hid_nimble = $true
+        }
+        if ($original.Equals("hid_h2zero.cpp")) {
+            $uses_hid_h2zero = $true
+        }
         if (-not ($original.Equals("NimBLEWrapper.cpp"))) {
-            $original
+            if  (-not ($original.Equals("hid_NimBLE.cpp"))) {
+                $original
+            }
         }
     }
     end {
+        if ($uses_hid_nimble -and -not $uses_hid_h2zero) {
+            "hid_h2zero.cpp"
+        }
         if ($uses_custom_ble_wrapper) {
             "NimBLEWrapper.cpp"
         }
