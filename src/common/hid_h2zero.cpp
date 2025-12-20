@@ -148,11 +148,14 @@ void startBLEAdvertising()
             AUTO_POWER_OFF_DELAY_SECS * 1000000);
 }
 
-class BleConnectionStatus : public NimBLEServerCallbacks
+class BleConnectionStatus : public NimBLEServerCallbacks,
+                            public NimBLECharacteristicCallbacks
 {
 public:
     BleConnectionStatus(void) {};
     bool connected = false;
+    bool battery_chr_subscribed = false;
+    bool input_report_chr_subscribed = false;
 
     // Fix Windows notifications not being sent on reconnection
     // See https://github.com/lemmingDev/ESP32-BLE-Gamepad/pull/257/files
@@ -184,7 +187,24 @@ public:
     {
         connected = false;
         startBLEAdvertising();
-    };
+    }
+
+    virtual void onSubscribe(
+        NimBLECharacteristic *pCharacteristic,
+        NimBLEConnInfo &connInfo,
+        uint16_t subValue) override
+    {
+        if (pCharacteristic == hidDevice->getBatteryLevel())
+        {
+            log_i("Subscribed to the battery level characteristic");
+            battery_chr_subscribed = (subValue != 0);
+        }
+        else
+        {
+            log_i("Subscribed to the input report characteristic");
+            input_report_chr_subscribed = (subValue != 0);
+        }
+    }
 
 } connectionStatus;
 
@@ -395,6 +415,8 @@ void internals::hid::begin(
         OutputReport::attachTo(hidDevice, RID_OUTPUT_RACE_CONTROL);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_GAUGES);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_PIXEL);
+        hidDevice->getBatteryLevel()->setCallbacks(&connectionStatus);
+        inputGamePad->setCallbacks(&connectionStatus);
 
         // Configure BLE advertising
         NimBLEAdvertising *pAdvertising = pServer->getAdvertising();
@@ -416,7 +438,7 @@ void internals::hid::begin(
 
 void internals::hid::reset()
 {
-    if (connectionStatus.connected)
+    if (connectionStatus.input_report_chr_subscribed)
     {
         uint8_t report[GAMEPAD_REPORT_SIZE];
         internals::hid::common::onReset(report);
@@ -433,7 +455,7 @@ void internals::hid::reportInput(
     uint8_t rightAxis,
     uint8_t clutchAxis)
 {
-    if (connectionStatus.connected)
+    if (connectionStatus.input_report_chr_subscribed)
     {
         uint8_t report[GAMEPAD_REPORT_SIZE];
         internals::hid::common::onReportInput(
@@ -452,7 +474,7 @@ void internals::hid::reportInput(
 
 void internals::hid::reportBatteryLevel(int level)
 {
-    if (hidDevice)
+    if (connectionStatus.battery_chr_subscribed)
     {
         if (level > 100)
             level = 100;
