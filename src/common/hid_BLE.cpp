@@ -208,15 +208,16 @@ bool internals::hid::isConnected()
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <BLEHIDDevice.h>
-#include <BLESecurity.h>
-#include <cassert>
+#include "HIDTypes.h"
+#include "HIDKeyboardTypes.h"
+#include "sdkconfig.h"
+#include "esp_gap_ble_api.h"
 
 #include "SimWheel.hpp"
 #include "SimWheelInternals.hpp"
 #include "InternalServices.hpp"
 #include "HID_definitions.hpp"
 #include "esp_mac.h" // For esp_efuse_mac_get_default()
-// #include <Arduino.h> // For debugging
 
 // ----------------------------------------------------------------------------
 // Globals
@@ -226,13 +227,52 @@ bool internals::hid::isConnected()
 static esp_timer_handle_t autoPowerOffTimer = nullptr;
 
 // Related to HID device
-using BLEHIDDeviceFix = BLEHIDDevice;
-// class BLEHIDDeviceFix;
+class BLEHIDDeviceFix;
 static BLEHIDDeviceFix *hidDevice = nullptr;
 static BLECharacteristic *inputGamePad = nullptr;
 static BLEServer *pServer = nullptr;
 static bool notifyConfigChanges = false;
 static constexpr uint16_t serialNumberChrUuid = BLE_SERIAL_NUMBER_CHR_UUID;
+
+// ----------------------------------------------------------------------------
+// BLEHIDDeviceFix
+//
+// This subclass is a workaround for a bug in Arduino-ESP32
+// For unknown reasons,
+// notifications get randomly disabled in the input report.
+// ----------------------------------------------------------------------------
+
+class BLEHIDDeviceFix : public BLEHIDDevice
+{
+public:
+    BLECharacteristic *inputReport(uint8_t reportID)
+    {
+        BLECharacteristic *inputReportCharacteristic =
+            hidService()->createCharacteristic(
+                (uint16_t)0x2a4d, BLECharacteristic::PROPERTY_READ |
+                                      BLECharacteristic::PROPERTY_NOTIFY);
+        BLEDescriptor *inputReportDescriptor =
+            new BLEDescriptor(BLEUUID((uint16_t)0x2908));
+        BLE2902 *p2902 = new BLE2902();
+        inputReportCharacteristic->setAccessPermissions(
+            ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
+        inputReportDescriptor->setAccessPermissions(
+            ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
+        p2902->setAccessPermissions(
+            ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
+        p2902->setNotifications(true);
+        p2902->setIndications(true);
+
+        uint8_t desc1_val[] = {reportID, 0x01};
+        inputReportDescriptor->setValue((uint8_t *)desc1_val, 2);
+        inputReportCharacteristic->addDescriptor(p2902);
+        inputReportCharacteristic->addDescriptor(inputReportDescriptor);
+
+        return inputReportCharacteristic;
+    }
+
+    BLEHIDDeviceFix(BLEServer *pServer) : BLEHIDDevice(pServer) {}
+};
 
 // ----------------------------------------------------------------------------
 // Utility
@@ -247,35 +287,19 @@ uint16_t byteswap(uint16_t value)
 // BLE Server callbacks and advertising
 // ----------------------------------------------------------------------------
 
-class BleConnectionStatus : public BLEServerCallbacks,
-                            public BLESecurityCallbacks
+class BleConnectionStatus : public BLEServerCallbacks
 {
 public:
     BleConnectionStatus(void) {};
     bool connected = false;
-
-    // Fix Windows notifications not being sent on reconnection
-    // See https://github.com/lemmingDev/ESP32-BLE-Gamepad/pull/257/files
-    virtual void onAuthenticationComplete(esp_ble_auth_cmpl_t desc) override
+    void onConnect(BLEServer *pServer) override
     {
         if (autoPowerOffTimer != nullptr)
             esp_timer_stop(autoPowerOffTimer);
-        //************************************************
-        // Do not call internals::hid::reset() here
-        //************************************************
-        // Quoting h2zero:
-        //
-        // When Windows bonds with a device and subscribes
-        // to notifications/indications
-        // of the device characteristics it does not
-        // re-subscribe on subsequent connections.
-        // If a notification is sent when Windows reconnects
-        // it will overwrite the stored subscription value
-        // in the NimBLE stack configuration with an invalid value which
-        // results in notifications/indications not being sent.
+        internals::hid::reset();
         connected = true;
         OnConnected::notify();
-    }
+    };
 
     void onDisconnect(BLEServer *pServer) override
     {
@@ -283,15 +307,13 @@ public:
         BLEDevice::startAdvertising();
         OnDisconnected::notify();
         if (autoPowerOffTimer != nullptr)
-            esp_timer_start_once(
-                autoPowerOffTimer,
-                AUTO_POWER_OFF_DELAY_SECS * 1000000);
+            esp_timer_start_once(autoPowerOffTimer, AUTO_POWER_OFF_DELAY_SECS * 1000000);
     };
 
 } connectionStatus;
 
 // ----------------------------------------------------------------------------
-// HID FEATURE REPORT callbacks
+// HID FEATURE REQUEST callbacks
 // ----------------------------------------------------------------------------
 
 class FeatureReport : public BLECharacteristicCallbacks
@@ -300,10 +322,7 @@ public:
     void onWrite(BLECharacteristic *pCharacteristic) override;
     void onRead(BLECharacteristic *pCharacteristic) override;
     FeatureReport(uint8_t RID, uint16_t size);
-    static void attachTo(
-        BLEHIDDeviceFix *hidDevice,
-        uint8_t RID,
-        uint16_t size);
+    static void attachTo(BLEHIDDeviceFix *hidDevice, uint8_t RID, uint16_t size);
 
 private:
     uint8_t _reportID;
@@ -334,10 +353,7 @@ FeatureReport::FeatureReport(uint8_t RID, uint16_t size)
 }
 
 // Attach to HID device
-void FeatureReport::attachTo(
-    BLEHIDDeviceFix *hidDevice,
-    uint8_t RID,
-    uint16_t size)
+void FeatureReport::attachTo(BLEHIDDeviceFix *hidDevice, uint8_t RID, uint16_t size)
 {
     BLECharacteristic *reportCharacteristic = hidDevice->featureReport(RID);
     if (!reportCharacteristic)
@@ -424,29 +440,24 @@ void internals::hid::begin(
         // Stack initialization
         BLEDevice::init(String(deviceName.c_str()));
         BLEDevice::setMTU(BLE_MTU_SIZE);
-        BLESecurity::setAuthenticationMode(true, true, false);
-        BLEDevice::setSecurityCallbacks(&connectionStatus);
         pServer = BLEDevice::createServer();
-        assert(pServer && "Unable to create GATT server");
         pServer->setCallbacks(&connectionStatus);
+        BLESecurity *pSecurity = new BLESecurity();
+        pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
+        pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
 
         // HID initialization
         hidDevice = new BLEHIDDeviceFix(pServer);
         if (!hidDevice)
             throw std::runtime_error("Unable to create HID device");
 
-        // Workaround for bug in `hidDevice->manufacturer(deviceManufacturer)`
-        hidDevice->manufacturer()->setValue(String(deviceManufacturer.c_str()));
+        hidDevice->manufacturer()->setValue(String(deviceManufacturer.c_str())); // Workaround for bug in `hidDevice->manufacturer(deviceManufacturer)`
 
         // Note: Workaround for bug in ESP-Arduino as of version 3.0.3
         uint16_t debugged_vid = byteswap(vendorID);
         uint16_t debugged_pid = byteswap(productID);
 
-        hidDevice->pnp(
-            BLE_VENDOR_SOURCE,
-            debugged_vid,
-            debugged_pid,
-            PRODUCT_REVISION);
+        hidDevice->pnp(BLE_VENDOR_SOURCE, debugged_vid, debugged_pid, PRODUCT_REVISION);
         hidDevice->hidInfo(0x00, 0x01);
         hidDevice->reportMap((uint8_t *)hid_descriptor, sizeof(hid_descriptor));
 
@@ -457,13 +468,10 @@ void internals::hid::begin(
             BLEService *deviceInfo = hidDevice->deviceInfo();
             if (deviceInfo)
             {
-                BLECharacteristic *serialNumChr =
-                    deviceInfo->getCharacteristic(serialNumberChrUuid);
+                BLECharacteristic *serialNumChr = deviceInfo->getCharacteristic(serialNumberChrUuid);
                 if (!serialNumChr)
                     serialNumChr =
-                        deviceInfo->createCharacteristic(
-                            serialNumberChrUuid,
-                            BLECharacteristic::PROPERTY_READ);
+                        deviceInfo->createCharacteristic(serialNumberChrUuid, BLECharacteristic::PROPERTY_READ);
                 if (serialNumChr)
                 {
                     char serialAsStr[9];
@@ -476,14 +484,10 @@ void internals::hid::begin(
 
         // Create HID reports
         inputGamePad = hidDevice->inputReport(RID_INPUT_GAMEPAD);
-        FeatureReport::attachTo(
-            hidDevice, RID_FEATURE_CAPABILITIES, CAPABILITIES_REPORT_SIZE);
-        FeatureReport::attachTo(
-            hidDevice, RID_FEATURE_CONFIG, CONFIG_REPORT_SIZE);
-        FeatureReport::attachTo(
-            hidDevice, RID_FEATURE_BUTTONS_MAP, BUTTONS_MAP_REPORT_SIZE);
-        FeatureReport::attachTo(
-            hidDevice, RID_FEATURE_HARDWARE_ID, HARDWARE_ID_REPORT_SIZE);
+        FeatureReport::attachTo(hidDevice, RID_FEATURE_CAPABILITIES, CAPABILITIES_REPORT_SIZE);
+        FeatureReport::attachTo(hidDevice, RID_FEATURE_CONFIG, CONFIG_REPORT_SIZE);
+        FeatureReport::attachTo(hidDevice, RID_FEATURE_BUTTONS_MAP, BUTTONS_MAP_REPORT_SIZE);
+        FeatureReport::attachTo(hidDevice, RID_FEATURE_HARDWARE_ID, HARDWARE_ID_REPORT_SIZE);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_POWERTRAIN);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_ECU);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_RACE_CONTROL);
@@ -493,6 +497,9 @@ void internals::hid::begin(
         // Configure BLE advertising
         BLEAdvertising *pAdvertising = pServer->getAdvertising();
         pAdvertising->setAppearance(HID_GAMEPAD);
+        pAdvertising->setScanResponse(true);
+        pAdvertising->setMinPreferred(0x06);
+        pAdvertising->setMinPreferred(0x12);
         pAdvertising->addServiceUUID(hidDevice->hidService()->getUUID());
         pAdvertising->addServiceUUID(hidDevice->batteryService()->getUUID());
         pAdvertising->addServiceUUID(hidDevice->deviceInfo()->getUUID());
@@ -546,7 +553,7 @@ void internals::hid::reportInput(
 
 void internals::hid::reportBatteryLevel(int level)
 {
-    if (hidDevice)
+    if (connectionStatus.connected)
     {
         if (level > 100)
             level = 100;
@@ -558,7 +565,7 @@ void internals::hid::reportBatteryLevel(int level)
 
 void internals::hid::reportChangeInConfig()
 {
-    notifyConfigChanges = true; // Will be reported in the next input report
+    notifyConfigChanges = true; // Will be reported in next input report
 }
 
 bool internals::hid::supportsCustomHardwareID() { return true; }
