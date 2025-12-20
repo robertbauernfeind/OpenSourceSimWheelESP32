@@ -276,7 +276,7 @@ To choose a **connectivity** option:
   | USB          | TinyUSB | ESP32-Arduino core    | hid_USB.cpp    |
   | Dummy        | none    | none                  | hid_dummy.cpp  |
 
-  Those file names are case-sensitive if you have Linux or Mac.
+  Those file names are case-sensitive.
 
 - Do not confuse those with "hidCommon.cpp".
   Do not touch that line.

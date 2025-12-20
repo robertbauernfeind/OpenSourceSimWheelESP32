@@ -302,17 +302,20 @@ Note that the following input numbers have a special meaning in Windows:
 This project provides several (exclusive) connectivity choices:
 
 - Bluetooth Low Energy (BLE) using the
-  [NimBLE stack](https://mynewt.apache.org/latest/network/) wrapper
-  from [h2zero](https://github.com/h2zero).
+  [NimBLE stack](https://mynewt.apache.org/latest/network/)
+  without a wrapper (no additional libraries required),
+  except for "pure" ESP32 DevKit boards (like the "ESP32-DevKit-C"),
+  which uses the *Bluedroid* stack via the *ESP32-Arduino* wrapper.
+  Starting with *ESP32-Arduino* version 4.0.0,
+  all boards will have the *NimBLE* stack.
   This is the default.
   If you are happy with this, ignore this section.
-  It works on any ESP32 DevKit board and ESP32-Arduino core version.
 
-- Bluetooth Low Energy (BLE) using the same *NimBLE* stack
-  but without a wrapper (no additional libraries required).
-  Requires ESP32-Arduino **core version 3.3.0 or later**.
-  **Does not work** with "pure" ESP32 boards (does not compile).
-  This will be fixed on ESP32-Arduino core version 4.0.0.
+- Bluetooth Low Energy (BLE) using the *NimBLE* wrapper
+  from [h2zero](https://github.com/h2zero).
+  You must install the
+  [h2zero/NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino)
+  library in this case.
 
 - Universal Serial Bus (USB).
 
@@ -329,14 +332,14 @@ In order to use any of them:
   Replace the file name in this table with another from
   the same table.
 
-  | Connectivity | Stack   | Wrapper               | *Filename*     |
-  | ------------ | ------- | --------------------- | -------------- |
-  | BLE          | NimBLE  | none                  | hid_BLE.cpp    |
-  | BLE          | NimBLE  | h2zero/NimBLE-Arduino | hid_h2zero.cpp |
-  | USB          | TinyUSB | ESP32-Arduino core    | hid_USB.cpp    |
-  | Dummy        | none    | none                  | hid_dummy.cpp  |
+  | Connectivity | Stack            | Wrapper                 | *Filename*     |
+  | ------------ | ---------------- | ----------------------- | -------------- |
+  | BLE          | NimBLE/Bluedroid | none/ESP32-Arduino core | hid_BLE.cpp    |
+  | BLE          | NimBLE           | h2zero/NimBLE-Arduino   | hid_h2zero.cpp |
+  | USB          | TinyUSB          | ESP32-Arduino           | hid_USB.cpp    |
+  | Dummy        | none             | none                    | hid_dummy.cpp  |
 
-  Those file names are case-sensitive if you have Linux or Mac.
+  Those file names are case-sensitive.
 
 - Do not confuse those with "hidCommon.cpp".
   Do not touch that line.

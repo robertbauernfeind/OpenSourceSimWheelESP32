@@ -3,7 +3,7 @@ batteryMonitor.cpp
 BatteryMonitorHardware.cpp
 firmware.cpp
 HAL.cpp
-hid_h2zero.cpp
+hid_ble.cpp
 hidCommon.cpp
 InputHardware.cpp
 inputHub.cpp

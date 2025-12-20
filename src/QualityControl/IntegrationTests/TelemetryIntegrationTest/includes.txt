@@ -1,5 +1,5 @@
 hidCommon.cpp
-hid_h2zero.cpp
+hid_ble.cpp
 telemetry.cpp
 ui.cpp
 pixels_dummy.cpp

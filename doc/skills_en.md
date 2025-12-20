@@ -10,15 +10,11 @@ Indispensable:
 
 - Official [Arduino-ESP32 support package](https://docs.espressif.com/projects/arduino-esp32/en/latest/getting_started.html).
   Follow [this link](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) for installation instructions.
-  This project has been successfully tested with **version 3.2.0**.
-
-- [Arduino library](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries):
-  - [h2zero/NimBLE-Arduino](https://www.arduino.cc/reference/en/libraries/nimble-arduino/).
-    This project has been successfully tested with **version 2.3.5**.
-    Any version prior to version 2.2.0 will not work.
+  This project has been successfully tested with **version 3.3.4**.
+  Any versión prior to 3.3.0 will not work.
 
 - [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2).
-  Already installed in Windows. Not strictly needed in Linux.
+  Already installed in Windows. Not strictly needed in Linux or Mac.
 
 > [!IMPORTANT]
 > This project is not guaranteed to work with untested version dependencies.
@@ -30,6 +26,13 @@ May be needed:
   A tutorial: [Installing drivers for the ESP32](https://www.bromleysat.com/installing-drivers-for-the-esp32/).
   Depending on what DevKit board you choose, a different driver may be needed.
   Check all information available from the manufacturer.
+
+- [Arduino library](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries):
+  - [h2zero/NimBLE-Arduino](https://www.arduino.cc/reference/en/libraries/nimble-arduino/).
+    This project has been successfully tested with **version 2.3.7**.
+    Any version prior to version 2.2.0 will not work.
+    This optional library is a caution against bugs.
+    How to use it will be explained later.
 
 Recommended:
 
