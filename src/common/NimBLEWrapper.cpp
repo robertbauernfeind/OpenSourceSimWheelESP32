@@ -13,6 +13,14 @@
  */
 
 //------------------------------------------------------------------------------
+// Conditional compilation
+//------------------------------------------------------------------------------
+
+#include "NimBLEWrapper.hpp"
+
+#if CONFIG_NIMBLE_ENABLED
+
+//------------------------------------------------------------------------------
 // Imports
 //------------------------------------------------------------------------------
 
@@ -21,8 +29,6 @@
 #include <cstring>
 #include <algorithm>
 #include <cassert>
-
-#include "NimBLEWrapper.hpp"
 
 #include "esp_mac.h"                     // esp_efuse_mac_get_default()
 #include "nvs_flash.h"                   // nvs_flash_init()
@@ -907,3 +913,5 @@ void BLEHIDService::init()
     // Nothing to do here.
     // Reserved for future use.
 }
+
+#endif // CONFIG_NIMBLE_ENABLED
