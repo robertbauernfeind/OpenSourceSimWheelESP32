@@ -1,6 +1,6 @@
 batteryCalibration.cpp
 BatteryMonitorHardware.cpp
-hid_ble.cpp
+hid_BLE.cpp
 hidCommon.cpp
 telemetry.cpp
 pixels_dummy.cpp
