@@ -201,6 +201,10 @@ int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
     return 0;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wall"
+
 void BLEAdvertising::init()
 {
     ApiResult rc;
@@ -238,7 +242,7 @@ void BLEAdvertising::init()
     const size_t device_name_size = strlen(device_name);
     if (device_name_size > 0)
     {
-        ble_hs_adv_fields scan_rsp_fields = {0};
+        ble_hs_adv_fields scan_rsp_fields{};
         scan_rsp_fields.name = (const uint8_t *)device_name;
         scan_rsp_fields.name_len =
             ::std::min<uint8_t>(device_name_size, BLE_HS_ADV_MAX_FIELD_SZ);
@@ -253,6 +257,8 @@ void BLEAdvertising::init()
     else
         log_i("BLE: Device name is empty (not advertised)");
 }
+
+#pragma GCC diagnostic pop
 
 //------------------------------------------------------------------------------
 // BLEDevice
@@ -333,7 +339,7 @@ void BLEDevice::init_gatt_server()
         BLEBatteryService::definition(),
         BLEDeviceInfoService::definition(),
         BLEHIDService::definition(),
-        {0},
+        EMPTY_ble_gatt_svc_def,
     };
 
     rc = ble_gatts_count_cfg(gatt_svr_svcs);
@@ -390,7 +396,7 @@ int BLEDesc2908::onRead(os_mbuf *buffer)
 
 ble_gatt_dsc_def BLEDesc2908::definition()
 {
-    ble_gatt_dsc_def result = {0};
+    ble_gatt_dsc_def result = EMPTY_ble_gatt_dsc_def;
     result.uuid = &uuid.u;
     result.att_flags = BLE_ATT_F_READ;
     result.access_cb = BLEAccessor<BLEDesc2908, true>::access_fn;
@@ -453,7 +459,7 @@ BatteryLevelChr::BatteryLevelChr() noexcept : value{100}
 
 ble_gatt_chr_def BatteryLevelChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     result.uuid = &uuid.u;
     result.flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY;
     result.access_cb = BLEAccessor<BatteryLevelChr>::access_fn;
@@ -487,7 +493,8 @@ void BatteryLevelChr::set(uint8_t new_value)
 const ble_gatt_svc_def BLEBatteryService::definition()
 {
     chr_set[0] = batteryLevel.definition();
-    ble_gatt_svc_def result = {0};
+    chr_set[1] = EMPTY_ble_gatt_chr_def;
+    ble_gatt_svc_def result = EMPTY_ble_gatt_svc_def;
     result.type = BLE_GATT_SVC_TYPE_PRIMARY;
     result.uuid = &uuid.u;
     result.characteristics = chr_set;
@@ -506,7 +513,7 @@ void BLEBatteryService::init()
 
 ble_gatt_chr_def PnpInfoChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     result.uuid = &uuid.u;
     result.flags = BLE_GATT_CHR_F_READ;
     result.access_cb = BLEAccessor<PnpInfoChr>::access_fn;
@@ -537,7 +544,7 @@ int PnpInfoChr::onRead(os_mbuf *buffer)
 
 ble_gatt_chr_def SerialNumberChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     result.uuid = &uuid.u;
     result.flags = BLE_GATT_CHR_F_READ;
     result.access_cb = BLEAccessor<SerialNumberChr>::access_fn;
@@ -567,7 +574,7 @@ int SerialNumberChr::onRead(os_mbuf *buffer)
 
 ble_gatt_chr_def ManufacturerChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     result.uuid = &uuid.u;
     result.flags = BLE_GATT_CHR_F_READ;
     result.access_cb = BLEAccessor<ManufacturerChr>::access_fn;
@@ -592,7 +599,8 @@ const ble_gatt_svc_def BLEDeviceInfoService::definition()
     chr_set[0] = pnpInfo.definition();
     chr_set[1] = serialNumber.definition();
     chr_set[2] = manufacturer.definition();
-    ble_gatt_svc_def result = {0};
+    chr_set[3] = EMPTY_ble_gatt_chr_def;
+    ble_gatt_svc_def result = EMPTY_ble_gatt_svc_def;
     result.type = BLE_GATT_SVC_TYPE_PRIMARY;
     result.uuid = &uuid.u;
     result.characteristics = chr_set;
@@ -618,8 +626,9 @@ FeatureReportChr::FeatureReportChr(uint8_t report_id, size_t size) noexcept
 
 ble_gatt_chr_def FeatureReportChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     desc_def[0] = desc2908.definition();
+    desc_def[1] = EMPTY_ble_gatt_dsc_def;
     result.uuid = &uuid.u;
     result.flags =
         BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC |
@@ -645,8 +654,9 @@ OutputReportChr::OutputReportChr(uint8_t report_id, size_t size) noexcept
 
 ble_gatt_chr_def OutputReportChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     desc_def[0] = desc2908.definition();
+    desc_def[1] = EMPTY_ble_gatt_dsc_def;
     result.uuid = &uuid.u;
     result.flags =
         BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_ENC |
@@ -673,9 +683,9 @@ InputReportChr::InputReportChr(uint8_t report_id, size_t size) noexcept
 ble_gatt_chr_def InputReportChr::definition()
 {
     assert(report_size > 0);
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     desc_def[0] = desc2908.definition();
-    desc_def[1] = {0};
+    desc_def[1] = EMPTY_ble_gatt_dsc_def;
     result.uuid = &uuid.u;
     result.flags =
         BLE_GATT_CHR_F_READ |
@@ -694,7 +704,7 @@ ble_gatt_chr_def InputReportChr::definition()
 
 ble_gatt_chr_def HIDInfoChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     result.uuid = &uuid.u;
     result.flags = BLE_GATT_CHR_F_READ;
     result.access_cb = BLEAccessor<HIDInfoChr>::access_fn;
@@ -722,7 +732,7 @@ int HIDInfoChr::onRead(os_mbuf *buffer)
 
 ble_gatt_chr_def HIDControlChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     result.uuid = &uuid.u;
     result.flags = BLE_GATT_CHR_F_WRITE_NO_RSP;
     result.access_cb = BLEAccessor<HIDControlChr>::access_fn;
@@ -737,7 +747,7 @@ ble_gatt_chr_def HIDControlChr::definition()
 
 ble_gatt_chr_def HIDReportMapChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     result.uuid = &uuid.u;
     result.flags = BLE_GATT_CHR_F_READ;
     result.access_cb = BLEAccessor<HIDReportMapChr>::access_fn;
@@ -762,7 +772,7 @@ int HIDReportMapChr::onRead(os_mbuf *buffer)
 
 ble_gatt_chr_def HIDProtocolModeChr::definition()
 {
-    ble_gatt_chr_def result = {0};
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
     result.uuid = &uuid.u;
     result.flags = BLE_GATT_CHR_F_WRITE_NO_RSP | BLE_GATT_CHR_F_READ;
     result.access_cb = BLEAccessor<HIDProtocolModeChr>::access_fn;
@@ -897,11 +907,11 @@ const ble_gatt_svc_def BLEHIDService::definition()
     chr_set[index++] = race_control_report.definition();
     chr_set[index++] = gauges_report.definition();
     chr_set[index++] = pixel_report.definition();
-    chr_set[index] = {0};
+    chr_set[index] = EMPTY_ble_gatt_chr_def;
     assert(
         ((sizeof(chr_set) / sizeof(ble_gatt_chr_def)) == index + 1) &&
         "Invalid size of BLEHIDService::chr_set array ");
-    ble_gatt_svc_def result = {0};
+    ble_gatt_svc_def result = EMPTY_ble_gatt_svc_def;
     result.type = BLE_GATT_SVC_TYPE_PRIMARY;
     result.uuid = &uuid.u;
     result.characteristics = chr_set;

@@ -15,7 +15,7 @@
 // Conditional compilation
 //------------------------------------------------------------------------------
 
-#include<Arduino.h> // For conditional compilation
+#include <Arduino.h> // For conditional compilation
 
 #if CONFIG_NIMBLE_ENABLED
 
@@ -44,6 +44,36 @@
 //------------------------------------------------------------------------------
 
 #define HID_REPORT_COUNT 10
+
+#define EMPTY_ble_gatt_cpfd { \
+    .format = 0,              \
+    .exponent = 0,            \
+    .unit = 0,                \
+    .name_space = 0,          \
+    .description = 0}
+
+#define EMPTY_ble_gatt_dsc_def { \
+    .uuid = nullptr,             \
+    .att_flags = 0,              \
+    .min_key_size = 0,           \
+    .access_cb = nullptr,        \
+    .arg = nullptr}
+
+#define EMPTY_ble_gatt_chr_def { \
+    .uuid = nullptr,             \
+    .access_cb = nullptr,        \
+    .arg = nullptr,              \
+    .descriptors = nullptr,      \
+    .flags = 0,                  \
+    .min_key_size = 0,           \
+    .val_handle = nullptr,       \
+    .cpfd = nullptr}
+
+#define EMPTY_ble_gatt_svc_def { \
+    .type = 0,                   \
+    .uuid = nullptr,             \
+    .includes = nullptr,         \
+    .characteristics = nullptr}
 
 //------------------------------------------------------------------------------
 // Classes
@@ -153,6 +183,11 @@ private:
     inline static const ble_gap_adv_params adv_params{
         .conn_mode = BLE_GAP_CONN_MODE_UND, // Undirected, connectable
         .disc_mode = BLE_GAP_DISC_MODE_GEN, // General discoverable
+        .itvl_min = 0,
+        .itvl_max = 0,
+        .channel_map = 0,
+        .filter_policy = 0,
+        .high_duty_cycle = 0,
     };
 
     /// @brief Current connection status
@@ -420,13 +455,16 @@ struct BatteryLevelChr : BLECharacteristic, BLEReadCallback
 private:
     inline static ble_gatt_cpfd _chr_cpfd_def[]{
         {
-            .format = 4,    // uint8
+            .format = 4, // uint8
+            .exponent = 0,
             .unit = 0x27AD, // percentage
+            .name_space = 0,
+            .description = 0,
         },
-        {0},
+        EMPTY_ble_gatt_cpfd,
     };
     uint8_t value;
-    ble_gatt_dsc_def dsc_def[2] = {0};
+    ble_gatt_dsc_def dsc_def[2]{};
 };
 
 /**
@@ -468,7 +506,7 @@ struct BLEBatteryService
     }
 
 private:
-    inline static ble_gatt_chr_def chr_set[2] = {0};
+    inline static ble_gatt_chr_def chr_set[2]{};
 };
 
 /// @brief Plug-and-play information characteristic
@@ -533,7 +571,7 @@ struct BLEDeviceInfoService
     static void init();
 
 private:
-    inline static ble_gatt_chr_def chr_set[4] = {0};
+    inline static ble_gatt_chr_def chr_set[4]{};
 };
 
 /// @brief Base class for all HID report characteristics
@@ -546,7 +584,7 @@ struct HIDReportChr : BLECharacteristic
 
 protected:
     BLEDesc2908 desc2908;
-    ble_gatt_dsc_def desc_def[2] = {0};
+    ble_gatt_dsc_def desc_def[2]{};
     size_t report_size = 0;
 };
 
@@ -737,7 +775,7 @@ struct BLEHIDService
     }
 
 private:
-    inline static ble_gatt_chr_def chr_set[4 + HID_REPORT_COUNT + 1] = {0};
+    inline static ble_gatt_chr_def chr_set[4 + HID_REPORT_COUNT + 1]{};
     static int report_access_fn(
         uint16_t conn_handle,
         uint16_t attr_handle,
