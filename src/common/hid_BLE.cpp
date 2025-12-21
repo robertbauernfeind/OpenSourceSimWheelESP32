@@ -62,6 +62,7 @@ void onConnectionStatus(bool connected)
     {
         if (autoPowerOffTimer != nullptr)
             esp_timer_stop(autoPowerOffTimer);
+        OnConnected::notify();
     }
     else // disconnected
     {
