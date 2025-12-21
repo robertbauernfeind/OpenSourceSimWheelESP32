@@ -6,11 +6,12 @@
   - Arduino-ESP32 support package (core): version **3.3.4**
   - NimBLE-Arduino: version **2.3.7** is supported but not needed anymore
     (see below).
+  - Arduino IDE version **2.3.7**.
 - BLE HID has been implemented directly on the NimBLE stack without any wrapper.
   It is available in the file `hid_BLE.cpp` and is the new default.
   However, "pure" ESP32 boards still use the Bluedroid stack instead of NimBLE.
   This is how ESP32-Arduino core 3.3.4 works.
-  Nimble will be available for that board when core version 4.0.0 is released.
+  NimBLE will be available for that board when core version 4.0.0 is released.
 - The file `hid_NimBLE.cpp` has been renamed to `hid_h2zero.cpp` to
   make clear that this implementation is based on h2zero's NimBLE wrapper.
 - The file `hid_ESPBLE.cpp` has been removed.
@@ -23,6 +24,8 @@
   it will automatically rename some old file names
   found in "includes.txt".
 - Documentation has been updated accordingly.
+- Small bug fix: bite point not automatically updated
+  when commanded from the companion app.
 
 ## 7.7.8
 
