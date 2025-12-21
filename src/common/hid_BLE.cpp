@@ -308,7 +308,9 @@ public:
         BLEDevice::startAdvertising();
         OnDisconnected::notify();
         if (autoPowerOffTimer != nullptr)
-            esp_timer_start_once(autoPowerOffTimer, AUTO_POWER_OFF_DELAY_SECS * 1000000);
+            esp_timer_start_once(
+                autoPowerOffTimer,
+                AUTO_POWER_OFF_DELAY_SECS * 1000000);
     };
 
 } connectionStatus;
@@ -323,7 +325,10 @@ public:
     void onWrite(BLECharacteristic *pCharacteristic) override;
     void onRead(BLECharacteristic *pCharacteristic) override;
     FeatureReport(uint8_t RID, uint16_t size);
-    static void attachTo(BLEHIDDeviceFix *hidDevice, uint8_t RID, uint16_t size);
+    static void attachTo(
+        BLEHIDDeviceFix *hidDevice,
+        uint8_t RID,
+        uint16_t size);
 
 private:
     uint8_t _reportID;
@@ -354,7 +359,10 @@ FeatureReport::FeatureReport(uint8_t RID, uint16_t size)
 }
 
 // Attach to HID device
-void FeatureReport::attachTo(BLEHIDDeviceFix *hidDevice, uint8_t RID, uint16_t size)
+void FeatureReport::attachTo(
+    BLEHIDDeviceFix *hidDevice,
+    uint8_t RID,
+    uint16_t size)
 {
     BLECharacteristic *reportCharacteristic = hidDevice->featureReport(RID);
     if (!reportCharacteristic)
@@ -445,20 +453,28 @@ void internals::hid::begin(
         pServer->setCallbacks(&connectionStatus);
         BLESecurity *pSecurity = new BLESecurity();
         pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
-        pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+        pSecurity->setInitEncryptionKey(
+            ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
 
         // HID initialization
         hidDevice = new BLEHIDDeviceFix(pServer);
         if (!hidDevice)
             throw std::runtime_error("Unable to create HID device");
 
-        hidDevice->manufacturer()->setValue(String(deviceManufacturer.c_str())); // Workaround for bug in `hidDevice->manufacturer(deviceManufacturer)`
+        hidDevice->manufacturer()->setValue(
+            // Workaround for bug in
+            // `hidDevice->manufacturer(deviceManufacturer)`
+            String(deviceManufacturer.c_str()));
 
         // Note: Workaround for bug in ESP-Arduino as of version 3.0.3
         uint16_t debugged_vid = byteswap(vendorID);
         uint16_t debugged_pid = byteswap(productID);
 
-        hidDevice->pnp(BLE_VENDOR_SOURCE, debugged_vid, debugged_pid, PRODUCT_REVISION);
+        hidDevice->pnp(
+            BLE_VENDOR_SOURCE,
+            debugged_vid,
+            debugged_pid,
+            PRODUCT_REVISION);
         hidDevice->hidInfo(0x00, 0x01);
         hidDevice->reportMap((uint8_t *)hid_descriptor, sizeof(hid_descriptor));
 
@@ -469,10 +485,13 @@ void internals::hid::begin(
             BLEService *deviceInfo = hidDevice->deviceInfo();
             if (deviceInfo)
             {
-                BLECharacteristic *serialNumChr = deviceInfo->getCharacteristic(serialNumberChrUuid);
+                BLECharacteristic *serialNumChr =
+                    deviceInfo->getCharacteristic(serialNumberChrUuid);
                 if (!serialNumChr)
                     serialNumChr =
-                        deviceInfo->createCharacteristic(serialNumberChrUuid, BLECharacteristic::PROPERTY_READ);
+                        deviceInfo->createCharacteristic(
+                            serialNumberChrUuid,
+                            BLECharacteristic::PROPERTY_READ);
                 if (serialNumChr)
                 {
                     char serialAsStr[9];
@@ -485,10 +504,14 @@ void internals::hid::begin(
 
         // Create HID reports
         inputGamePad = hidDevice->inputReport(RID_INPUT_GAMEPAD);
-        FeatureReport::attachTo(hidDevice, RID_FEATURE_CAPABILITIES, CAPABILITIES_REPORT_SIZE);
-        FeatureReport::attachTo(hidDevice, RID_FEATURE_CONFIG, CONFIG_REPORT_SIZE);
-        FeatureReport::attachTo(hidDevice, RID_FEATURE_BUTTONS_MAP, BUTTONS_MAP_REPORT_SIZE);
-        FeatureReport::attachTo(hidDevice, RID_FEATURE_HARDWARE_ID, HARDWARE_ID_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice, RID_FEATURE_CAPABILITIES, CAPABILITIES_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice, RID_FEATURE_CONFIG, CONFIG_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice, RID_FEATURE_BUTTONS_MAP, BUTTONS_MAP_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice, RID_FEATURE_HARDWARE_ID, HARDWARE_ID_REPORT_SIZE);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_POWERTRAIN);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_ECU);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_RACE_CONTROL);
