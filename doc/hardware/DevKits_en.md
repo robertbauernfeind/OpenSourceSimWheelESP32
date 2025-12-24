@@ -65,6 +65,26 @@ but that is not the best choice due to its excessive size.
 >
 > ![custom board](../pcb/CustomDevKit/CustomDevKit_small.jpg)
 
+## Precautions when purchasing a DevKit board
+
+The market is saturated with boards cloning prestigious brands
+such as Adafruit and Espressif itself.
+**In principle, there is nothing wrong with them**,
+but some manufacturers engage in unethical practices.
+Be wary of products that display blurry photographs
+or chips without manufacturer markings.
+It is advisable to compare the image of a board on its official website
+with the one you are going to buy
+and look for differences that may be very subtle.
+
+Always read the description to ensure you know exactly which
+Espressif chip model is installed.
+Check that it matches the photograph.
+Do not purchase boards with chips that do not have integrated flash memory.
+Use the
+[Expressif's product selector](https://products.espressif.com/#/product-selector)
+to check the *part numbers* (PN) and their capabilities.
+
 ## Flash memory requirements
 
 At the time of writing,
