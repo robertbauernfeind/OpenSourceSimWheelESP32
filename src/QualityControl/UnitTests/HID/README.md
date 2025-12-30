@@ -201,11 +201,6 @@ Not applicable to the USB implementation.
 ### Battery status (BLE only)
 
 Not applicable to the USB implementation.
-
-Remove the device from the Bluetooth control panel,
-so the device is unpaired.
-
-Open *nRF Connect* (make sure both geolocation and Bluetooth radio are enabled).
 To perform this test, you will type one-character commands into
 the serial monitor:
 
