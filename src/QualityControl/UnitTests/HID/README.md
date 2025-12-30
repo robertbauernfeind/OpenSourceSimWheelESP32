@@ -28,13 +28,17 @@ Output through USB serial port at 115200 bauds.
 Computer:
 
 - Windows 10 or later
-- Bluetooth 4.2 or later (not required in USB implementation)
+- Bluetooth 4.2 or later (not required in the USB implementation)
 - Joystick testing software able to display 128 buttons.
   Note that Window's device property page is not suitable for this.
 - SimpleHIDWrite.exe: available at
   [http://janaxelson.com/hidpage.htm](http://janaxelson.com/hidpage.htm).
   There is a modern clone at
   [https://github.com/Robmaister/SimplerHidWrite](https://github.com/Robmaister/SimplerHidWrite).
+
+Smartphone (BLE implementation only):
+
+- nRF Connect application (Android/iOS).
 
 ## Specific notes for the USB implementation
 
@@ -193,3 +197,33 @@ Not applicable to the USB implementation.
    Look for the message `*** CONNECTED ***` at the serial monitor.
 3. Reopen the joystick test application (close and run again).
 4. Ensure the buttons test is running again (as described before).
+
+### Battery status (BLE only)
+
+Not applicable to the USB implementation.
+
+Remove the device from the Bluetooth control panel,
+so the device is unpaired.
+
+Open *nRF Connect* (make sure both geolocation and Bluetooth radio are enabled).
+To perform this test, you will type one-character commands into
+the serial monitor:
+
+- "L": enable/disable the state of charge (yes/unknown).
+- "W": cycle the wire presence (yes/no/unknown).
+- "C": cycle the charging status (charging/discharging/unknown).
+- "B": cycle the battery presence (yes/no/unknown).
+
+The simulated battery status will be printed to the serial monitor on
+each command. Type "?" to reprint the last status.
+
+1. Remove the device from the Bluetooth control panel,
+   so the device is unpaired and disconnected.
+2. Open *nRF Connect*
+   (make sure both geolocation and Bluetooth radio are enabled).
+3. Reset the device.
+4. Discover the device and connect (but do not pair).
+5. Expand the *Battery Service* and the *Battery Level Status* characteristic.
+   Subscribe to that characteristic.
+6. For each command (described above) cycle through all possible values.
+   Check that *nRF Connect* reflects the battery status printed.
