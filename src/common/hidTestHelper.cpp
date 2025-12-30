@@ -247,7 +247,7 @@ void printBatteryStatus()
         Serial.println("yes");
     else
         Serial.println("no");
-}
+} // printBatteryStatus()
 
 void executeSerialCommands()
 {
@@ -299,10 +299,12 @@ void executeSerialCommands()
         else
             battStatus.isBatteryPresent = true;
         printBatteryStatus();
+    } else if (chr == '?')
+    {
+        printBatteryStatus();
     }
-
 #endif
-}
+} // executeSerialCommands()
 
 //------------------------------------------------------------------
 // Arduino entry point

@@ -449,7 +449,19 @@ struct BatteryLevelChr : BLECharacteristic, BLEReadCallback
     BatteryLevelChr &operator=(BatteryLevelChr &&) noexcept = default;
     virtual int onRead(os_mbuf *buffer) override;
     virtual ble_gatt_chr_def definition() override;
+
+    /**
+     * @brief Set and report the current battery level
+     *
+     * @param new_value Battery level in the range [0,100]
+     */
     void set(uint8_t new_value);
+
+    /**
+     * @brief Get the last notified battery level
+     *
+     * @return uint8_t Battery level in the range [0,100]
+     */
     uint8_t get() const noexcept { return value; }
 
 private:
@@ -457,14 +469,31 @@ private:
         {
             .format = 4, // uint8
             .exponent = 0,
-            .unit = 0x27AD, // percentage
-            .name_space = 0,
-            .description = 0,
+            .unit = 0x27AD,       // percentage
+            .name_space = 0x01,   // Bluetooth SIG
+            .description = 0x106, // main namespace
         },
         EMPTY_ble_gatt_cpfd,
     };
     uint8_t value;
     ble_gatt_dsc_def dsc_def[2]{};
+};
+
+/// @brief Battery Status characteristic
+struct BatteryStatusChr : BLECharacteristic, BLEReadCallback
+{
+    /// @brief Characteristic UUID
+    inline static const ble_uuid16_t uuid = BLE_UUID16_INIT(0x2BED);
+
+    virtual int onRead(os_mbuf *buffer) override;
+    virtual ble_gatt_chr_def definition() override;
+
+    /**
+     * @brief 3-byte flags as defined by the BAS specification
+     * @note Exposed for efficiency
+     *
+     */
+    uint8_t data[3]{};
 };
 
 /**
@@ -478,6 +507,8 @@ struct BLEBatteryService
 
     /// @brief Battery level characteristic
     inline static BatteryLevelChr batteryLevel{};
+    /// @brief Battery status characteristic
+    inline static BatteryStatusChr batteryStatus{};
 
     /**
      * @brief Service definition as required by NimBLE
@@ -503,10 +534,11 @@ struct BLEBatteryService
         bool yesOrNo)
     {
         batteryLevel.setSubscription_if(attr_handle, yesOrNo);
+        batteryStatus.setSubscription_if(attr_handle, yesOrNo);
     }
 
 private:
-    inline static ble_gatt_chr_def chr_set[2]{};
+    inline static ble_gatt_chr_def chr_set[3]{};
 };
 
 /// @brief Plug-and-play information characteristic

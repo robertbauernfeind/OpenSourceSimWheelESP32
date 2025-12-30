@@ -24,7 +24,7 @@
 // Imports
 //------------------------------------------------------------------------------
 
-#define NDEBUG // Comment out while debugging
+// #define NDEBUG // Comment out while debugging
 
 #include <cstring>
 #include <algorithm>
@@ -481,9 +481,35 @@ int BatteryLevelChr::onRead(os_mbuf *buffer)
 
 void BatteryLevelChr::set(uint8_t new_value)
 {
-    assert(new_value <= 100);
+    if (new_value > 100)
+        new_value = 100;
     value = new_value;
     notify();
+}
+
+//------------------------------------------------------------------------------
+// BatteryStatusChr
+//------------------------------------------------------------------------------
+
+ble_gatt_chr_def BatteryStatusChr::definition()
+{
+    ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;
+    result.uuid = &uuid.u;
+    result.flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY;
+    result.access_cb = BLEAccessor<BatteryStatusChr>::access_fn;
+    result.val_handle = &attr_handle;
+    result.arg = (void *)this;
+    return result;
+}
+
+int BatteryStatusChr::onRead(os_mbuf *buffer)
+{
+    ApiResult rc = os_mbuf_append(
+        buffer,
+        &data,
+        sizeof(data));
+    rc.log_if("BatteryStatusChr::onRead() failed");
+    return rc.to_attr_rc(true);
 }
 
 //------------------------------------------------------------------------------
@@ -493,7 +519,8 @@ void BatteryLevelChr::set(uint8_t new_value)
 const ble_gatt_svc_def BLEBatteryService::definition()
 {
     chr_set[0] = batteryLevel.definition();
-    chr_set[1] = EMPTY_ble_gatt_chr_def;
+    chr_set[1] = batteryStatus.definition();
+    chr_set[2] = EMPTY_ble_gatt_chr_def;
     ble_gatt_svc_def result = EMPTY_ble_gatt_svc_def;
     result.type = BLE_GATT_SVC_TYPE_PRIMARY;
     result.uuid = &uuid.u;

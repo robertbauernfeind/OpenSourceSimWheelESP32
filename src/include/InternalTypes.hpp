@@ -644,6 +644,8 @@ typedef InternalEvent<InternalEventType::SaveSetting, UserSetting> SaveSetting;
 //-------------------------------------------------------------------
 
 /// @brief Battery level to report when unknown
+/// @deprecated Ignored, as the BAS specification requires zero
+///             to be reported
 #define UNKNOWN_BATTERY_LEVEL 66
 
 //-------------------------------------------------------------------

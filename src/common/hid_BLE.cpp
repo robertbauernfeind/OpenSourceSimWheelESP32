@@ -174,11 +174,14 @@ void internals::hid::reportInput(
 
 void internals::hid::reportBatteryLevel(int level)
 {
-    if (level > 100)
-        level = 100;
-    else if (level < 0)
-        level = 0;
     BLEBatteryService::batteryLevel.set(level);
+}
+
+void internals::hid::reportBatteryLevel(const BatteryStatus &status)
+{
+    BLEBatteryService::batteryLevel.set(status.stateOfCharge.value_or(0));
+    status.bleValue(BLEBatteryService::batteryStatus.data);
+    BLEBatteryService::batteryStatus.notify();
 }
 
 void internals::hid::reportChangeInConfig()
@@ -587,9 +590,15 @@ void internals::hid::reportBatteryLevel(int level)
     }
 }
 
+void internals::hid::reportBatteryLevel(const BatteryStatus &status)
+{
+    internals::hid::reportBatteryLevel(
+        status.stateOfCharge.value_or(UNKNOWN_BATTERY_LEVEL));
+}
+
 void internals::hid::reportChangeInConfig()
 {
-    notifyConfigChanges = true; // Will be reported in next input report
+    notifyConfigChanges = true; // Will be reported in the next input report
 }
 
 bool internals::hid::supportsCustomHardwareID() { return true; }
