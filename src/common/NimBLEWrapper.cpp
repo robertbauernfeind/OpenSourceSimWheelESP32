@@ -24,7 +24,7 @@
 // Imports
 //------------------------------------------------------------------------------
 
-// #define NDEBUG // Comment out while debugging
+#define NDEBUG // Comment out while debugging
 
 #include <cstring>
 #include <algorithm>
