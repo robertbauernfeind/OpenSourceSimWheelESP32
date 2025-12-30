@@ -1,6 +1,6 @@
 firmware.cpp
 HAL.cpp
-hid_NimBLE.cpp
+hid_BLE.cpp
 hidCommon.cpp
 InputHardware.cpp
 inputHub.cpp

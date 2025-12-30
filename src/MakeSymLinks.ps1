@@ -125,7 +125,8 @@ function New-SymLink {
     )
     try {
         # Create links
-        New-Item -ItemType SymbolicLink -Path $LinkFile -Target $ExistingFile | Out-Null
+        New-Item -ItemType SymbolicLink -Path $LinkFile `
+            -Target $ExistingFile | Out-Null
     }
     catch [UnauthorizedAccessException] {
         # No admin privileges, copy files instead
@@ -138,7 +139,6 @@ function New-SymLink {
         Write-Warning "$ExistingFile not found"
     }
 }
-
 
 function Get-IncludesFileContent {
     param (
@@ -157,6 +157,55 @@ function Get-IncludesFileContent {
             }
             else {
                 $l
+            }
+        }
+    }
+}
+
+function Push-AuxiliaryFiles {
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [string]$original
+    )
+    begin {
+        $uses_hid_ble = $false
+        $uses_hid_espble = $false
+        $uses_hid_nimble = $false
+        $uses_hid_h2zero = $false
+        $uses_nimble_wrapper = $false
+    }
+    process {
+        if ($original.Equals("hid_ESPBLE.cpp")) {
+            $uses_hid_espble = $true
+        }
+        if ($original.Equals("hid_BLE.cpp")) {
+            $uses_hid_ble = $true
+        }
+        if ($original.Equals("hid_NimBLE.cpp")) {
+            $uses_hid_nimble = $true
+        }
+        if ($original.Equals("hid_h2zero.cpp")) {
+            $uses_hid_h2zero = $true
+        }
+        if ($original.Equals("NimBLEWrapper.cpp")) {
+            $uses_nimble_wrapper = $true
+        }
+        if ((-not $original.Equals("hid_NimBLE.cpp")) -and `
+            (-not $original.Equals("hid_ESPBLE.cpp")) ) {
+            $original
+        }
+    }
+    end {
+        if ($uses_hid_nimble -and (-not $uses_hid_h2zero)) {
+            "hid_h2zero.cpp"
+        }
+        else {
+            if ($uses_hid_espble -and (-not $uses_hid_ble)) {
+                "hid_BLE.cpp"
+                $uses_hid_ble = $true
+            }
+            if ($uses_hid_ble -and (-not $uses_nimble_wrapper)) {
+                "NimBLEWrapper.cpp"
             }
         }
     }
@@ -209,7 +258,8 @@ try {
 
         Write-Info "Creating links to header files"
         foreach ($headerFile in $headerFiles) {
-            $destinationFile = Set-LinkFilename -SourceFullName $headerFile -DestinationFolder $specFolder
+            $destinationFile = Set-LinkFilename -SourceFullName $headerFile `
+                -DestinationFolder $specFolder
             if ($Test) {
                 Write-ForTesting "$headerFile ⇒ $destinationFile"
             }
@@ -220,12 +270,14 @@ try {
 
         Write-Info "Creating links to filenames found in '$_includesFile'"
         $includesContent = Get-IncludesFileContent -LiteralPath $specFile
+        $includesContent = $includesContent | Push-AuxiliaryFiles
         if ($includesContent.Length -eq 0) {
             Write-Warning "'$_includesFile' is empty"
         }
         foreach ($includedFile in $includesContent) {
             $sourceFile = Join-Path $commonPath $includedFile
-            $destinationFile = Set-LinkFilename -SourceFullName $sourceFile -DestinationFolder $specFolder
+            $destinationFile = Set-LinkFilename -SourceFullName $sourceFile `
+                -DestinationFolder $specFolder
             if (Test-Path $sourceFile) {
                 if ($Test) {
                     Write-ForTesting "$sourceFile ⇒ $destinationFile"

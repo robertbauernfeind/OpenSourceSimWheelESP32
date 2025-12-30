@@ -1,9 +1,10 @@
 /**
- * @file hid_NimBLE.cpp
+ * @file hid_h2zero.cpp
  *
  * @author Ángel Fernández Pineda. Madrid. Spain.
  * @date 2022-02-27
- * @brief Implementation of a HID device through the NimBLE stack
+ * @brief Implementation of a HID device via the
+ *        h2zero/NimBLE-Arduino wrapper
  *
  * @copyright Licensed under the EUPL
  *
@@ -81,12 +82,14 @@ NimBLECharacteristic *NimBLEHIDDeviceFix::getOutputReport(uint8_t reportId)
     NimBLECharacteristic *outputReportChr =
         getHidService()->createCharacteristic(
             hidReportChrUuid,
-            NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR |
+            NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE |
+            NIMBLE_PROPERTY::WRITE_NR |
                 NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC,
             2);
     NimBLEDescriptor *outputReportDsc = outputReportChr->createDescriptor(
         hidReportChrDscUuid,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
+        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE |
+        NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
 
     uint8_t desc1_val[] = {reportId, 0x02};
     outputReportDsc->setValue(desc1_val, 2);
@@ -96,13 +99,16 @@ NimBLECharacteristic *NimBLEHIDDeviceFix::getOutputReport(uint8_t reportId)
 
 NimBLECharacteristic *NimBLEHIDDeviceFix::getFeatureReport(uint8_t reportId)
 {
-    NimBLECharacteristic *featureReportChr = getHidService()->createCharacteristic(
+    NimBLECharacteristic *featureReportChr =
+        getHidService()->createCharacteristic(
         hidReportChrUuid,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
+            NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE |
+            NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
 
     NimBLEDescriptor *featureReportDsc = featureReportChr->createDescriptor(
         hidReportChrDscUuid,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC,
+        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE |
+        NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC,
         2);
 
     uint8_t desc1_val[] = {reportId, 0x03};
@@ -117,7 +123,8 @@ NimBLECharacteristic *NimBLEHIDDeviceFix::getInputReport(uint8_t reportId)
     NimBLECharacteristic *inputReportChr =
         getHidService()->createCharacteristic(
             hidReportChrUuid,
-            NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC);
+            NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY |
+            NIMBLE_PROPERTY::READ_ENC);
 
     NimBLEDescriptor *inputReportDsc =
         inputReportChr->createDescriptor(
@@ -130,15 +137,6 @@ NimBLECharacteristic *NimBLEHIDDeviceFix::getInputReport(uint8_t reportId)
     return inputReportChr;
 } // getInputReport
 */
-// ----------------------------------------------------------------------------
-// PHY configuration
-// ----------------------------------------------------------------------------
-
-bool setDefaultPhy(uint8_t txPhyMask, uint8_t rxPhyMask)
-{
-    int rc = ble_gap_set_prefered_default_le_phy(txPhyMask, rxPhyMask);
-    return rc == 0;
-}
 
 // ----------------------------------------------------------------------------
 // BLE Server callbacks and advertising
@@ -149,21 +147,19 @@ void startBLEAdvertising()
     NimBLEDevice::startAdvertising();
     OnDisconnected::notify();
     if (autoPowerOffTimer != nullptr)
-        esp_timer_start_once(autoPowerOffTimer, AUTO_POWER_OFF_DELAY_SECS * 1000000);
+        esp_timer_start_once(
+            autoPowerOffTimer,
+            AUTO_POWER_OFF_DELAY_SECS * 1000000);
 }
 
-class BleConnectionStatus : public NimBLEServerCallbacks
+class BleConnectionStatus : public NimBLEServerCallbacks,
+                            public NimBLECharacteristicCallbacks
 {
 public:
     BleConnectionStatus(void) {};
     bool connected = false;
-
-    // Not needed for now
-    // void onConnect(
-    //     NimBLEServer *pServer,
-    //     NimBLEConnInfo &connInfo) override {
-    //     pServer->updateConnParams(connInfo.getConnHandle(), 6, 7, 0, 600);
-    // };
+    bool battery_chr_subscribed = false;
+    bool input_report_chr_subscribed = false;
 
     // Fix Windows notifications not being sent on reconnection
     // See https://github.com/lemmingDev/ESP32-BLE-Gamepad/pull/257/files
@@ -177,9 +173,12 @@ public:
         //************************************************
         // Quoting h2zero:
         //
-        // When Windows bonds with a device and subscribes to notifications/indications
-        // of the device characteristics it does not re-subscribe on subsequent connections.
-        // If a notification is sent when Windows reconnects it will overwrite the stored subscription value
+        // When Windows bonds with a device and subscribes
+        // to notifications/indications
+        // of the device characteristics it does not re-subscribe
+        // on subsequent connections.
+        // If a notification is sent when Windows reconnects
+        // it will overwrite the stored subscription value
         // in the NimBLE stack configuration with an invalid value which
         // results in notifications/indications not being sent.
         OnConnected::notify();
@@ -192,7 +191,24 @@ public:
     {
         connected = false;
         startBLEAdvertising();
-    };
+    }
+
+    virtual void onSubscribe(
+        NimBLECharacteristic *pCharacteristic,
+        NimBLEConnInfo &connInfo,
+        uint16_t subValue) override
+    {
+        if (pCharacteristic == hidDevice->getBatteryLevel())
+        {
+            log_i("Subscribed to the battery level characteristic");
+            battery_chr_subscribed = (subValue != 0);
+        }
+        else
+        {
+            log_i("Subscribed to the input report characteristic");
+            input_report_chr_subscribed = (subValue != 0);
+        }
+    }
 
 } connectionStatus;
 
@@ -210,7 +226,10 @@ public:
         NimBLECharacteristic *pCharacteristic,
         NimBLEConnInfo &connInfo) override;
     FeatureReport(uint8_t RID, uint16_t size);
-    static void attachTo(NimBLEHIDDeviceFix *hidDevice, uint8_t RID, uint16_t size);
+    static void attachTo(
+        NimBLEHIDDeviceFix *hidDevice,
+        uint8_t RID,
+        uint16_t size);
 
 private:
     uint8_t _reportID;
@@ -248,9 +267,13 @@ FeatureReport::FeatureReport(uint8_t RID, uint16_t size)
 }
 
 // Attach to HID device
-void FeatureReport::attachTo(NimBLEHIDDeviceFix *hidDevice, uint8_t RID, uint16_t size)
+void FeatureReport::attachTo(
+    NimBLEHIDDeviceFix *hidDevice,
+    uint8_t RID,
+    uint16_t size)
 {
-    NimBLECharacteristic *reportCharacteristic = hidDevice->getFeatureReport(RID);
+    NimBLECharacteristic *reportCharacteristic =
+        hidDevice->getFeatureReport(RID);
     if (!reportCharacteristic)
     {
         log_e("Unable to create HID report characteristics");
@@ -271,7 +294,9 @@ void FeatureReport::attachTo(NimBLEHIDDeviceFix *hidDevice, uint8_t RID, uint16_
 class OutputReport : public NimBLECharacteristicCallbacks
 {
 public:
-    void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override;
+    void onWrite(
+        NimBLECharacteristic *pCharacteristic,
+        NimBLEConnInfo &connInfo) override;
     OutputReport(uint8_t RID);
     static void attachTo(NimBLEHIDDeviceFix *hidDevice, uint8_t RID);
 
@@ -285,7 +310,9 @@ OutputReport::OutputReport(uint8_t RID)
 }
 
 // RECEIVE DATA
-void OutputReport::onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
+void OutputReport::onWrite(
+    NimBLECharacteristic *pCharacteristic,
+    NimBLEConnInfo &connInfo)
 {
     size_t size = pCharacteristic->getValue().length();
     const uint8_t *data = pCharacteristic->getValue().data();
@@ -293,7 +320,9 @@ void OutputReport::onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo
 }
 
 // Attach to HID device
-void OutputReport::attachTo(NimBLEHIDDeviceFix *hidDevice, uint8_t RID)
+void OutputReport::attachTo(
+    NimBLEHIDDeviceFix *hidDevice,
+    uint8_t RID)
 {
     NimBLECharacteristic *reportCharacteristic = hidDevice->getOutputReport(RID);
     if (!reportCharacteristic)
@@ -339,10 +368,10 @@ void internals::hid::begin(
 
         // Stack initialization
         NimBLEDevice::init(deviceName);
-        // NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND);
-        NimBLEDevice::setSecurityAuth(true, false, false);
+        NimBLEDevice::setSecurityAuth(true, true, false);
         NimBLEDevice::setMTU(BLE_MTU_SIZE);
-        setDefaultPhy(BLE_GAP_LE_PHY_2M_MASK, BLE_GAP_LE_PHY_2M_MASK);
+        NimBLEDevice::setDefaultPhy(BLE_GAP_LE_PHY_2M_MASK,
+                                    BLE_GAP_LE_PHY_2M_MASK);
         pServer = NimBLEDevice::createServer();
         pServer->setCallbacks(&connectionStatus);
 
@@ -395,6 +424,8 @@ void internals::hid::begin(
         OutputReport::attachTo(hidDevice, RID_OUTPUT_RACE_CONTROL);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_GAUGES);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_PIXEL);
+        hidDevice->getBatteryLevel()->setCallbacks(&connectionStatus);
+        inputGamePad->setCallbacks(&connectionStatus);
 
         // Configure BLE advertising
         NimBLEAdvertising *pAdvertising = pServer->getAdvertising();
@@ -417,7 +448,7 @@ void internals::hid::begin(
 
 void internals::hid::reset()
 {
-    if (connectionStatus.connected)
+    if (connectionStatus.input_report_chr_subscribed)
     {
         uint8_t report[GAMEPAD_REPORT_SIZE];
         internals::hid::common::onReset(report);
@@ -434,7 +465,7 @@ void internals::hid::reportInput(
     uint8_t rightAxis,
     uint8_t clutchAxis)
 {
-    if (connectionStatus.connected)
+    if (connectionStatus.input_report_chr_subscribed)
     {
         uint8_t report[GAMEPAD_REPORT_SIZE];
         internals::hid::common::onReportInput(
@@ -453,7 +484,7 @@ void internals::hid::reportInput(
 
 void internals::hid::reportBatteryLevel(int level)
 {
-    if (hidDevice)
+    if (connectionStatus.battery_chr_subscribed)
     {
         if (level > 100)
             level = 100;

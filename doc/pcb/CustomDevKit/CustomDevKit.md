@@ -179,16 +179,16 @@ or attach an external push button to the `Reset` pads.
 
 - Rotary encoders:
 
-  | Rotary # |  A pin   |  B pin   |
-  |:--------:|:--------:|:--------:|
-  |    1     |  GPIO 4  |  GPIO 5  |
-  |    2     |  GPIO 7  |  GPIO 6  |
-  |    3     |  GPIO 11 |  GPIO 10 |
-  |    4     |  GPIO 13 |  GPIO 12 |
-  |    5     |  GPIO 17 |  GPIO 18 |
-  |    6     |  GPIO 16 |  GPIO 21 |
-  |    7     |  GPIO 15 |  GPIO 33 |
-  |    8     |  GPIO 14 |  GPIO 34 |
+  | Rotary # |  A pin  |  B pin  |
+  | :------: | :-----: | :-----: |
+  |    1     | GPIO 4  | GPIO 5  |
+  |    2     | GPIO 7  | GPIO 6  |
+  |    3     | GPIO 11 | GPIO 10 |
+  |    4     | GPIO 13 | GPIO 12 |
+  |    5     | GPIO 17 | GPIO 18 |
+  |    6     | GPIO 16 | GPIO 21 |
+  |    7     | GPIO 15 | GPIO 33 |
+  |    8     | GPIO 14 | GPIO 34 |
 
   *Note* that `A` and `B` pins can be customized
   for other uses, for example, additional switches.
@@ -266,15 +266,17 @@ To make a working copy:
 To choose a **connectivity** option:
 
 - Edit the file **"includes.txt"** at your sketch folder.
-  Replace the text "hid_NimBLE.cpp" with a filename chosen from this table:
+  Replace the file name in this table with another from
+  the same table.
 
-  | Connectivity | Stack         | Filename       |
-  | ------------ | ------------- | -------------- |
-  | BLE          | NimBLE        | hid_NimBLE.cpp |
-  | BLE          | ESP32-Arduino | hid_ESPBLE.cpp |
-  | USB          | ESP32-Arduino | hid_USB.cpp    |
+  | Connectivity | Stack   | Wrapper               | *Filename*     |
+  | ------------ | ------- | --------------------- | -------------- |
+  | BLE          | NimBLE  | none                  | hid_BLE.cpp    |
+  | BLE          | NimBLE  | h2zero/NimBLE-Arduino | hid_h2zero.cpp |
+  | USB          | TinyUSB | ESP32-Arduino core    | hid_USB.cpp    |
+  | Dummy        | none    | none                  | hid_dummy.cpp  |
 
-  Those file names are case-sensitive if you have Linux or Mac.
+  Those file names are case-sensitive.
 
 - Do not confuse those with "hidCommon.cpp".
   Do not touch that line.

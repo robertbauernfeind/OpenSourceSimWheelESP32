@@ -10,13 +10,14 @@ To test that:
 This procedure is the same for all HID implementations,
 however, each implementation requires a different sketch:
 
-- [NimBLE implementation](./NimBLEimplTest/NimBLEimplTest.ino)
-- [ESP-Arduino BLE implementation](./ESPBLEimplTest/ESPBLEimplTest.ino)
+- [BLE implementation based on raw NimBLE](./BLEimplTest/BLEimplTest.ino)
+- [BLE implementation based on h2zero's wrapper (NimBLE)](./h2zeroImplTest/h2zeroImplTest.ino)
 - [USB implementation](./USBImplTest/USBImplTest.ino)
 
 ## Hardware setup
 
-- BLE implementations: nothing required, except for an external antenna on some devices.
+- BLE implementations: nothing required, except for an
+  external antenna on some devices.
 - USB implementation: an ESP32-S3 DevKit board is required
   (LillyGo T-QT and ESP32S3-DevKit-C were tested).
 
@@ -30,8 +31,8 @@ Computer:
 - Bluetooth 4.2 or later (not required in USB implementation)
 - Joystick testing software able to display 128 buttons.
   Note that Window's device property page is not suitable for this.
-- SimpleHIDWrite.exe:
-  available at [http://janaxelson.com/hidpage.htm](http://janaxelson.com/hidpage.htm).
+- SimpleHIDWrite.exe: available at
+  [http://janaxelson.com/hidpage.htm](http://janaxelson.com/hidpage.htm).
   There is a modern clone at
   [https://github.com/Robmaister/SimplerHidWrite](https://github.com/Robmaister/SimplerHidWrite).
 
@@ -52,7 +53,8 @@ Use this board configuration in Arduino IDE:
 
 - If the device is paired because of a previous test,
   unpair it first (delete from the Bluetooth control panel).
-- Before pairing, wait for the `*** DISCOVERING ***` notification at the serial monitor.
+- Before pairing, wait for the `*** DISCOVERING ***`
+  notification at the serial monitor.
 - It will be shown as "NimBLEimplTest", "ESPBLEimplTest" or "ESPBLEimplTest"
   (depending on which implementation is being tested).
 
@@ -98,7 +100,8 @@ Not applicable to the USB implementation.
    (Waiting for connection)
    ```
 
-3. Before a minute elapses, pair and connect with the device using the Bluetooth controls in your computer.
+3. Before a minute elapses, pair and connect with the device
+   using the Bluetooth controls in your computer.
 4. Output must match:
 
    ```text
@@ -106,7 +109,8 @@ Not applicable to the USB implementation.
    ```
 
 5. Open the joystick test application and keep it visible.
-6. Rx, Ry and Rz axes should increase each second. At almost max value, must return to zero.
+6. Rx, Ry and Rz axes should increase each second. At almost max value,
+   must return to zero.
 
 ### Battery level
 
@@ -121,14 +125,18 @@ Not applicable to the USB implementation.
 ### Buttons
 
 1. Buttons should be pressed and released every second.
-   If buttons are numbered starting with #1, pressed buttons must follow this timed pattern :
+   If buttons are numbered starting with #1,
+   pressed buttons must follow this timed pattern :
    - Buttons #1 and #65 are pressed at the same time.
-   - Previous buttons are released and buttons #2 and #66 are pressed at the same time.
-   - Previous buttons are released and buttons #3 and #67 are pressed at the same time.
+   - Previous buttons are released and buttons #2 and #66
+     are pressed at the same time.
+   - Previous buttons are released and buttons #3 and #67
+     are pressed at the same time.
    - The pattern continues until buttons #64 and #128 are pressed.
    - Then, the pattern starts again.
 2. Restart this test if something is missed.
-3. Point-of-view control (aka "Hat switch" or "POV") must follow this pattern in a loop:
+3. Point-of-view control (aka "Hat switch" or "POV")
+   must follow this pattern in a loop:
    - Not pressed
    - Up
    - Up-right

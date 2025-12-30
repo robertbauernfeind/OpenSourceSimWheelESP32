@@ -61,6 +61,14 @@
   - BLE devices: remove from the Bluetooth control panel then pair again.
   - USB devices: remove from the device manager then reboot your computer.
     Ensure the operating system is detecting your device as new hardware.
+- Device not discoverable in **Windows 11 version 25H2** (BLE only).
+  It seems this issue is caused by a bug in this version.
+  Workarounds:
+  - [uninstall the update](https://pureinfotech.com/uninstall-windows-11-25h2/#uninstall_windows11_25h2_windowsupdate).
+  - Go to Settings > System > Recovery > Fix problems using Windows Update >
+    Reinstall now.
+
+  Reset your device before pairing again.
 
 ## Contributing
 

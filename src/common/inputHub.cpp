@@ -380,6 +380,7 @@ public:
         if ((value < CLUTCH_INVALID_VALUE) && (value != bitePoint))
         {
             bitePoint = value;
+            InputService::call::update();
             OnBitePoint::notify(value);
             if (save)
                 SaveSetting::notify(UserSetting::BITE_POINT);
