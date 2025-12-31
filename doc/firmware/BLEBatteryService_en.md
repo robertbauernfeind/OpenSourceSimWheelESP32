@@ -9,7 +9,7 @@ That specification comes from the following documents:
   - 3.23 Battery Critical Status (page 28)
   - 3.27 Battery Information (page 32)
   - 3.28 Battery Level (page 35)
-  - 3.29 Battery Level Status (page 35)
+  - 3.29 Battery Level Status (page 37)
 - [Assigned Numbers](https://www.bluetooth.com/specifications/assigned-numbers/)
 - [Bluetooth Core Specification](https://www.bluetooth.com/specifications/specs/core60-html/)
 - [GATT Namespace descriptors](https://github.com/dano-liu/bluetooth-spec/blob/main/GATT%20Namespace%20Descriptors.pdf)
@@ -93,9 +93,10 @@ Mandatory if there are two or more battery services.
 each Battery Level characteristic **shall** include a
 Characteristic Presentation Format descriptor
 ...
-and the Description field set to a valid value from the GATT Namespace Descriptors
-and that is **unique** among all instances of the Battery Service exposed by the GATT Server.
-»
+and the Description field set to a valid value
+from the GATT Namespace Descriptors
+and that is **unique** among all instances
+of the Battery Service exposed by the GATT Server.»
 
 Read only, no authentication, no authorization.
 
@@ -219,7 +220,8 @@ of the battery represented by this instance of the Battery Service.»
 
 - Battery level field:
 
-  «The value of this field shall be identical to the Battery Level characteristic.»
+  «The value of this field shall be identical
+  to the Battery Level characteristic.»
 
 - Additional status field:
 
