@@ -56,6 +56,8 @@ BatteryStatusChrData toBleBatteryStatus(
     // Battery level
     // (must be identical to the value of the battery level characteristic)
     result.battery_level = status.stateOfCharge.value_or(0);
+    if (result.battery_level > 100)
+        result.battery_level = 100;
 
     // Battery charge level (summarized)
     if (status.stateOfCharge.has_value())
@@ -288,9 +290,11 @@ static esp_timer_handle_t autoPowerOffTimer = nullptr;
 class BLEHIDDeviceFix;
 static BLEHIDDeviceFix *hidDevice = nullptr;
 static BLECharacteristic *inputGamePad = nullptr;
+static BLECharacteristic *battStatusChr = nullptr;
 static BLEServer *pServer = nullptr;
 static bool notifyConfigChanges = false;
 static constexpr uint16_t serialNumberChrUuid = BLE_SERIAL_NUMBER_CHR_UUID;
+static constexpr uint16_t batteryStatusChrUuid = BLE_BATTERY_STATUS_CHR_UUID;
 
 // ----------------------------------------------------------------------------
 // BLEHIDDeviceFix
@@ -559,6 +563,20 @@ void internals::hid::begin(
             }
         }
 
+        // Expand the battery service with a
+        // "battery level status" characteristic
+        BLEService *battService = hidDevice->batteryService();
+        assert(battService && "BLE: hidDevice->batteryService() failed");
+        battStatusChr = battService->createCharacteristic(
+            batteryStatusChrUuid,
+            BLECharacteristic::PROPERTY_READ |
+                BLECharacteristic::PROPERTY_NOTIFY);
+        assert(battStatusChr &&
+               "BLE: Unable to create the battery level status characteristic");
+        BLE2902 *p2902 = new BLE2902();
+        p2902->setNotifications(true);
+        battStatusChr->addDescriptor(p2902);
+
         // Create HID reports
         inputGamePad = hidDevice->inputReport(RID_INPUT_GAMEPAD);
         FeatureReport::attachTo(
@@ -646,8 +664,15 @@ void internals::hid::reportBatteryLevel(int level)
 
 void internals::hid::reportBatteryLevel(const BatteryStatus &status)
 {
-    internals::hid::reportBatteryLevel(
-        status.stateOfCharge.value_or(UNKNOWN_BATTERY_LEVEL));
+    // -- Battery level status characteristic
+    BatteryStatusChrData result = toBleBatteryStatus(status);
+    battStatusChr->setValue(
+        (const uint8_t *)(&result),
+        sizeof(result));
+    battStatusChr->notify();
+
+    // -- Battery level characteristic
+    hidDevice->setBatteryLevel(result.battery_level);
 }
 
 void internals::hid::reportChangeInConfig()

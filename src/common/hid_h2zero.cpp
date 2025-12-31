@@ -404,14 +404,17 @@ void internals::hid::begin(
             }
         }
 
-        // Expand the battery service with a "battery level status" characteristic
+        // Expand the battery service with a
+        // "battery level status" characteristic
         NimBLEService *battService = hidDevice->getBatteryService();
         assert(battService && "BLE: hidDevice->getBatteryService() failed");
         battStatusChr = battService->createCharacteristic(
             batteryStatusChrUuid,
             NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY,
-            7);
-        assert(battStatusChr && "BLE: Unable to create the battery level status characteristic");
+            sizeof(BatteryStatusChrData));
+        assert(
+            battStatusChr &&
+            "BLE: Unable to create the battery level status characteristic");
 
         // Create HID reports
         inputGamePad = hidDevice->getInputReport(RID_INPUT_GAMEPAD);
@@ -496,18 +499,54 @@ void internals::hid::reportBatteryLevel(int level)
 
 void internals::hid::reportBatteryLevel(const BatteryStatus &status)
 {
-    // Battery level
-    int level = status.stateOfCharge.value_or(0);
-    if (level > 100)
-        level = 100;
-    else if (level < 0)
-        level = 0;
-    hidDevice->setBatteryLevel(level, true);
+    // -- Battery level status characteristic
+    BatteryStatusChrData result{};
 
-    // Battery level status
-    uint8_t statusData[3];
-    status.bleValue(statusData);
-    battStatusChr->notify(statusData, 3);
+    // Battery presence
+    if (status.isBatteryPresent.value_or(false))
+        result.ps_battery_present = 1;
+
+    // Wired power
+    if (status.usingExternalPower.has_value())
+    {
+        if (status.usingExternalPower.value())
+            result.ps_wired_ext_power = 1; // = yes
+        // else result.ps_wired_ext_power = 0 = no;
+    }
+    else
+        result.ps_wired_ext_power = 2; // = unknown
+
+    // Charging status
+    if (status.isCharging.has_value())
+    {
+        result.ps_battery_charge_state =
+            (status.isCharging.value())
+                ? 1  // = charging
+                : 2; // = discharging (active)
+    }
+    // else result.ps_battery_charge_state = 0 = unknown
+
+    // Battery level
+    // (must be identical to the value of the battery level characteristic)
+    result.battery_level = status.stateOfCharge.value_or(0);
+    if (result.battery_level > 100)
+        result.battery_level = 100;
+
+    // Battery charge level (summarized)
+    if (status.stateOfCharge.has_value())
+    {
+        if (result.battery_level < 8)
+            result.ps_battery_charge_level = 3; // = critical
+        else if (result.battery_level < 15)
+            result.ps_battery_charge_level = 2; // = low
+        else
+            result.ps_battery_charge_level = 1; // = good
+    }
+    // else result.ps_battery_charge_level = 0 = unknown
+    battStatusChr->notify(result, sizeof(result));
+
+    // -- Battery level characteristic
+    hidDevice->setBatteryLevel(result.battery_level);
 }
 
 void internals::hid::reportChangeInConfig()
