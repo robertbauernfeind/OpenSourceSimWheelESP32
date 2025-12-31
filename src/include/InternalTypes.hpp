@@ -99,29 +99,27 @@ struct FakeInput
 // Input bitmaps
 //-------------------------------------------------------------------
 
-// /**
-//  * @brief A bit array which assembles the state of every button, being the least significant bit
-//  *        the button numbered as 0, and the most significant bit the button numbered as 63.
-//  *        A bit set to 1 means the button is pressed, 0 means not pressed.
-//  *        May be used to identify a number of buttons, too.
-//  */
-// typedef uint64_t InputBitmap;
-
 /**
- * @brief Return a mask for a number of consecutive buttons (`count`) starting from `first`.
- *        A mask is a bit array where each bit determines if a button is to be used or not.
+ * @brief Return a mask for a number of consecutive buttons (`count`)
+ *        starting from `first`.
+ *        A mask is a bit array where each bit determines
+ *        if a button is to be used or not.
  *        1 means **not** used. 0 means in use.
  *        Masks are required to combine the state from multiple input bitmaps.
  *        For example, BITMASK(2,2) returns 0b(...)11110011 which means that
  *        buttons numbered 2 and 3 are in use.
  */
-#define BITMASK(count, first) ~(((1ULL << static_cast<uint64_t>(count)) - 1ULL) << static_cast<uint64_t>(first))
+#define BITMASK(count, first)                         \
+    ~(((1ULL << static_cast<uint64_t>(count)) - 1ULL) \
+      << static_cast<uint64_t>(first))
 
 /**
  * @brief Return the logical negation of a bit mask
  *
  */
-#define NBITMASK(count, first) (((1ULL << static_cast<uint64_t>(count)) - 1ULL) << static_cast<uint64_t>(first))
+#define NBITMASK(count, first)                       \
+    (((1ULL << static_cast<uint64_t>(count)) - 1ULL) \
+     << static_cast<uint64_t>(first))
 
 //-------------------------------------------------------------------
 // Device capabilities
@@ -399,6 +397,32 @@ struct DecouplingEvent
 #define MAX_DECOUPLING_EVENT_COUNT 64
 
 //-------------------------------------------------------------------
+// Battery Management
+//-------------------------------------------------------------------
+
+/// @brief Battery status
+struct BatteryStatus
+{
+public:
+    /// @brief Measured battery level in the range from 0% to 100%
+    std::optional<uint8_t> stateOfCharge{};
+    /// @brief  True if the battery is being charged
+    std::optional<bool> isCharging{};
+    /// @brief False if the battery is not connected but there is external power
+    std::optional<bool> isBatteryPresent{};
+    /// @brief True if there is wired power
+    std::optional<bool> usingExternalPower{};
+
+    constexpr bool operator==(const BatteryStatus &other) const noexcept
+    {
+        return (stateOfCharge == other.stateOfCharge) &&
+               (isCharging == other.isCharging) &&
+               (isBatteryPresent == other.isBatteryPresent) &&
+               (usingExternalPower == other.usingExternalPower);
+    }
+};
+
+//-------------------------------------------------------------------
 // Internal events
 //-------------------------------------------------------------------
 
@@ -428,12 +452,15 @@ enum class InternalEventType : uint8_t
     SettingsSaved,
     /// @brief The pulse width multiplier has changed
     PulseWidthMultiplier,
-    /// @brief The system is in a low battery state (repeated at timed intervals)
+    /// @brief The system is in a low battery state
+    ///        (repeated at timed intervals)
     LowBattery,
     /// @brief Request to save a user setting
     SaveSetting,
     /// @brief Request to load a user setting
-    LoadSetting
+    LoadSetting,
+    /// @brief Change in battery status or battery level
+    NewBatteryStatus
 };
 
 /**
@@ -588,31 +615,40 @@ typedef InternalEvent<InternalEventType::BitePoint, uint8_t> OnBitePoint;
  * @brief New clutch working mode
  * @note Notified when that working mode changes
  */
-typedef InternalEvent<InternalEventType::ClutchWorkingMode, ClutchWorkingMode> OnClutchWorkingMode;
+typedef InternalEvent<InternalEventType::ClutchWorkingMode, ClutchWorkingMode>
+    OnClutchWorkingMode;
 
 /**
  * @brief New ALT buttons working mode
  * @note Notified when that working mode changes
  */
-typedef InternalEvent<InternalEventType::AltButtonsWorkingMode, AltButtonsWorkingMode> OnAltButtonsWorkingMode;
+typedef InternalEvent<
+    InternalEventType::AltButtonsWorkingMode,
+    AltButtonsWorkingMode>
+    OnAltButtonsWorkingMode;
 
 /**
  * @brief New DPAD working mode
  * @note Notified when that working mode changes
  */
-typedef InternalEvent<InternalEventType::DPadWorkingMode, void> OnDPadWorkingMode;
+typedef InternalEvent<InternalEventType::DPadWorkingMode, void>
+    OnDPadWorkingMode;
 
 /**
  * @brief Save event
  * @note Notified when a user setting is saved to persistent storage
  */
-typedef InternalEvent<InternalEventType::SettingsSaved, void> OnSettingsSaved;
+typedef InternalEvent<InternalEventType::SettingsSaved, void>
+    OnSettingsSaved;
 
 /**
  * @brief New pulse width multiplier
  * @note Notified when changed
  */
-typedef InternalEvent<InternalEventType::PulseWidthMultiplier, PulseWidthMultiplier> OnPulseWidthMultiplier;
+typedef InternalEvent<
+    InternalEventType::PulseWidthMultiplier,
+    PulseWidthMultiplier>
+    OnPulseWidthMultiplier;
 
 /**
  * @brief Notified when a low battery condition is detected
@@ -622,31 +658,27 @@ typedef InternalEvent<InternalEventType::PulseWidthMultiplier, PulseWidthMultipl
 typedef InternalEvent<InternalEventType::LowBattery, void> OnLowBattery;
 
 /**
- * @brief New battery level (state of charge)
+ * @brief New battery level (state of charge) or battery status
  * @note Notified when the state of charge changes by 1% or more.
  */
-typedef InternalEvent<InternalEventType::LowBattery, int> OnBatteryLevel;
+typedef InternalEvent<
+    InternalEventType::NewBatteryStatus,
+    const BatteryStatus &>
+    OnBatteryStatus;
 
 /**
  * @brief Request to load a user setting
  * @note Notified when a user setting must be loaded
  */
-typedef InternalEvent<InternalEventType::LoadSetting, UserSetting> LoadSetting;
+typedef InternalEvent<InternalEventType::LoadSetting, UserSetting>
+    LoadSetting;
 
 /**
  * @brief Request to save a user setting
  * @note Notified when a user setting must be saved to persistent storage
  */
-typedef InternalEvent<InternalEventType::SaveSetting, UserSetting> SaveSetting;
-
-//-------------------------------------------------------------------
-// Battery
-//-------------------------------------------------------------------
-
-/// @brief Battery level to report when unknown
-/// @deprecated Ignored, as the BAS specification requires zero
-///             to be reported
-#define UNKNOWN_BATTERY_LEVEL 66
+typedef InternalEvent<InternalEventType::SaveSetting, UserSetting>
+    SaveSetting;
 
 //-------------------------------------------------------------------
 // Automatic shutdown
@@ -688,28 +720,3 @@ typedef enum
     CMD_RESET_PIXELS = 8,
     _MAX_VALUE = 8
 } SimpleCommand;
-
-//-------------------------------------------------------------------
-// Battery Management
-//-------------------------------------------------------------------
-
-struct BatteryStatus
-{
-public:
-    /// @brief Measured battery level in the range from 0% to 100%
-    std::optional<uint8_t> stateOfCharge{};
-    /// @brief  True if the battery is being charged
-    std::optional<bool> isCharging{};
-    /// @brief False if the battery is not connected but there is external power
-    std::optional<bool> isBatteryPresent{};
-    /// @brief True if there is wired power
-    std::optional<bool> usingExternalPower{};
-
-    constexpr bool operator==(const BatteryStatus &other) const noexcept
-    {
-        return (stateOfCharge == other.stateOfCharge) &&
-               (isCharging == other.isCharging) &&
-               (isBatteryPresent == other.isBatteryPresent) &&
-               (usingExternalPower == other.usingExternalPower);
-    }
-};

@@ -141,6 +141,11 @@ void internals::hid::reportBatteryLevel(int level)
     // Do nothing
 }
 
+void internals::hid::reportBatteryLevel(const BatteryStatus &status)
+{
+    // Do nothing
+}
+
 void internals::hid::reportChangeInConfig()
 {
     notifyConfigChanges = true; // Will be reported in next input report

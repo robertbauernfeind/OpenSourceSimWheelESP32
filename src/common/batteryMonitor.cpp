@@ -122,7 +122,7 @@ class BatteryServiceProvider : public BatteryService
 public:
     virtual int getLastBatteryLevel() override
     {
-        return (int)currentStatus.stateOfCharge.value_or(UNKNOWN_BATTERY_LEVEL);
+        return (int)currentStatus.stateOfCharge.value_or(0);
     }
 
     virtual bool hasBattery() override
@@ -153,25 +153,26 @@ void batteryMonitorDaemonLoop(void *arg)
     while (true)
     {
         batteryMonitorhardware->getStatus(newBatteryStatus);
-        uint8_t previousSoC = currentStatus.stateOfCharge.value_or(UNKNOWN_BATTERY_LEVEL);
-        uint8_t newSoC = newBatteryStatus.stateOfCharge.value_or(UNKNOWN_BATTERY_LEVEL);
-
-        if (previousSoC != newSoC)
-            OnBatteryLevel::notify(newSoC);
-
-        if (newBatteryStatus.stateOfCharge.has_value())
+        if (currentStatus != newBatteryStatus)
         {
-            if ((powerOff_soc > 0) && (newSoC <= powerOff_soc))
+            currentStatus = newBatteryStatus;
+            OnBatteryStatus::notify(newBatteryStatus);
+            if (newBatteryStatus.stateOfCharge.has_value())
             {
-                // The DevKit must go to deep sleep before the battery depletes, otherwise, it keeps
-                // draining current even if there is not enough voltage to turn it on.
-                PowerService::call::shutdown();
+                uint8_t newSoC =
+                    newBatteryStatus.stateOfCharge.value_or(0);
+                if ((powerOff_soc > 0) && (newSoC <= powerOff_soc))
+                {
+                    // The DevKit must go to deep sleep before the battery
+                    // depletes, otherwise, it keeps
+                    // draining current even if there is
+                    // not enough voltage to turn it on.
+                    PowerService::call::shutdown();
+                }
+                else if (newSoC <= low_battery_soc)
+                    OnLowBattery::notify();
             }
-            else if (newSoC <= low_battery_soc)
-                OnLowBattery::notify();
         }
-
-        currentStatus = newBatteryStatus;
 
         // Delay to next sample
         DELAY_MS(sampling_rate_secs * 1000);
@@ -185,7 +186,9 @@ void batteryMonitorStart()
 {
     if ((!FirmwareService::call::isRunning()) && (batteryMonitorhardware != nullptr))
     {
-        OnBatteryLevel::notify(BatteryService::call::getLastBatteryLevel());
+        BatteryStatus status;
+        BatteryService::call::getStatus(status);
+        OnBatteryStatus::notify(status);
         batteryMonitorhardware->onStart();
 #if !CD_CI
         TaskHandle_t batteryMonitorDaemon = nullptr;

@@ -15,7 +15,6 @@
 bool internals::hid::isConnected() { return true; }
 bool internals::hid::supportsCustomHardwareID() { return true; }
 void internals::hid::reportChangeInConfig() {}
-void internals::hid::reportBatteryLevel(int batteryLevel) {}
 void internals::hid::reportBatteryLevel(const BatteryStatus &status) {}
 void internals::hid::reportInput(
     uint64_t inputsLow,

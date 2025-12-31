@@ -233,11 +233,6 @@ void internals::hid::reportInput(
     BLEHIDService::input_report.notify();
 }
 
-void internals::hid::reportBatteryLevel(int level)
-{
-    BLEBatteryService::batteryLevel.set(level);
-}
-
 void internals::hid::reportBatteryLevel(const BatteryStatus &status)
 {
     BLEBatteryService::batteryLevel.set(status.stateOfCharge.value_or(0));
@@ -605,7 +600,7 @@ void internals::hid::begin(
 
         // Start services
         hidDevice->startServices();
-        hidDevice->setBatteryLevel(UNKNOWN_BATTERY_LEVEL);
+        hidDevice->setBatteryLevel(0);
         connectionStatus.onDisconnect(pServer); // start advertising
     }
 }
@@ -650,29 +645,20 @@ void internals::hid::reportInput(
     }
 }
 
-void internals::hid::reportBatteryLevel(int level)
+void internals::hid::reportBatteryLevel(const BatteryStatus &status)
 {
     if (connectionStatus.connected)
     {
-        if (level > 100)
-            level = 100;
-        else if (level < 0)
-            level = 0;
-        hidDevice->setBatteryLevel(level);
+        // -- Battery level status characteristic
+        BatteryStatusChrData result = toBleBatteryStatus(status);
+        battStatusChr->setValue(
+            (const uint8_t *)(&result),
+            sizeof(result));
+        battStatusChr->notify();
+
+        // -- Battery level characteristic
+        hidDevice->setBatteryLevel(result.battery_level);
     }
-}
-
-void internals::hid::reportBatteryLevel(const BatteryStatus &status)
-{
-    // -- Battery level status characteristic
-    BatteryStatusChrData result = toBleBatteryStatus(status);
-    battStatusChr->setValue(
-        (const uint8_t *)(&result),
-        sizeof(result));
-    battStatusChr->notify();
-
-    // -- Battery level characteristic
-    hidDevice->setBatteryLevel(result.battery_level);
 }
 
 void internals::hid::reportChangeInConfig()

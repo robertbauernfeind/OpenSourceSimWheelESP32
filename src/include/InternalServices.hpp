@@ -457,7 +457,7 @@ public:
      * @brief Get the last known battery level (SoC)
      *
      */
-    virtual int getLastBatteryLevel() MOCK_R(UNKNOWN_BATTERY_LEVEL);
+    virtual int getLastBatteryLevel() MOCK_R(0);
 
     /**
      * @brief Check if the device can be powered by a battery
@@ -534,11 +534,11 @@ public:
      * @param reading An ADC reading of current battery(+) voltage
      *
      * @return If auto-calibration is available, a percentage in the range 0%-100%.
-     *         Otherwise, the constant `UNKNOWN_BATTERY_LEVEL`.
+     *         Otherwise, zero.
      *
      * @note Based on https://blog.ampow.com/lipo-voltage-chart/
      */
-    virtual int getBatteryLevelAutoCalibrated(int reading) MOCK_R(UNKNOWN_BATTERY_LEVEL);
+    virtual int getBatteryLevelAutoCalibrated(int reading) MOCK_R(0);
 
     /**
      * @brief Get the count of calibration data items

@@ -146,7 +146,7 @@ class BatteryCalibrationProvider : public BatteryCalibrationService
             return getGenericLiPoBatteryLevel(reading);
         }
         else
-            return UNKNOWN_BATTERY_LEVEL;
+            return 0;
     }
 
     virtual uint8_t getCalibrationDataCount() override

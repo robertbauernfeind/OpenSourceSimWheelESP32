@@ -73,10 +73,10 @@ void waitFor(std::string message = "")
 // Auxiliary (event handlers)
 //------------------------------------------------------------------
 
-void get_current_battery_level(int level)
+void get_current_battery_level(const BatteryStatus &status)
 {
     // std::cout << "get_current_battery_level" << std::endl;
-    receivedBatteryLevel = level;
+    receivedBatteryLevel = status.stateOfCharge.value_or(0);
     received.release();
 }
 
@@ -136,12 +136,14 @@ void test2()
     currentStatus.stateOfCharge = 33;
     DELAY_MS(1500);
     waitFor("State of charge 33");
-    assert<bool>::equals("state of charge (1)", 33, BatteryService::call::getLastBatteryLevel());
+    assert<bool>::equals("state of charge (1)", 33,
+                         BatteryService::call::getLastBatteryLevel());
 
     reset();
     DELAY_MS(1500);
     waitFor("State of charge unknown");
-    assert<bool>::equals("state of charge (2)", UNKNOWN_BATTERY_LEVEL, BatteryService::call::getLastBatteryLevel());
+    assert<bool>::equals("state of charge (2)", 0,
+                         BatteryService::call::getLastBatteryLevel());
 }
 
 //------------------------------------------------------------------
@@ -153,7 +155,7 @@ void test2()
 int main()
 {
     PowerService::inject(new PowerServiceMock);
-    OnBatteryLevel::subscribe(get_current_battery_level);
+    OnBatteryStatus::subscribe(get_current_battery_level);
     OnLowBattery::subscribe(on_low_battery);
     OnShutdown::subscribe(on_shutdown);
     internals::batteryMonitor::configureFakeMonitor(&currentStatus);

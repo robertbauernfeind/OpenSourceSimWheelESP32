@@ -8,18 +8,23 @@ This subsystem is for **battery-operated** systems, only.
 
 ## Purpose
 
-The purpose of this subsystem is to provide an estimation of how much battery charge is left,
+The purpose of this subsystem is to provide an estimation
+of how much battery charge is left,
 so the user knows when to plug the charging cable in.
-The battery level is a percentage of charge left in the range 0% to 100% (also known as "state of charge" or "SoC").
+The battery level is a percentage of charge left in the range 0% to 100%
+(also known as "state of charge" or "SoC").
 Battery level is known to the hosting PC through Bluetooth Low Energy.
 
 There are several (exclusive) **alternate implementations** to choose from:
 
-- *Simple voltage divider*: can be found in some ESP32 DevKit boards as a built-in feature.
-- *Battery monitor*: avoids battery drainage thanks to additional on/off circuitry.
+- *Simple voltage divider*: can be found in some ESP32 DevKit boards
+  as a built-in feature.
+- *Battery monitor*: avoids battery drainage
+  thanks to additional on/off circuitry.
 - *"Fuel gauge" chip*: provides state-of-the-art SoC estimation.
 
-The firmware will read the battery level every few minutes and it takes only a few milliseconds long.
+The firmware will read the battery level every few minutes
+and it takes only a few milliseconds long.
 
 ## Simple voltage divider or battery monitor
 
@@ -28,7 +33,8 @@ The firmware will read the battery level every few minutes and it takes only a f
 **Accurate battery SoC cannot be achieved** in this project
 (or in most home-made electronics) using these implementations.
 SoC estimation is harder than you may think.
-For SoC, consumer electronics use a combination of complex circuitry, factory measurements and software (even Artificial Intelligence).
+For SoC, consumer electronics use a combination of complex circuitry,
+factory measurements and software (even Artificial Intelligence).
 This is out of scope for a home-made project.
 
 For further reading, look at this article:
@@ -36,51 +42,70 @@ For further reading, look at this article:
 
 ### Working principles
 
-A battery monitor needs to read the output voltage of the battery (*not* the powerboost output voltage), this is,
-the voltage at the positive terminal (the negative terminal is wired to ground - `GND`).
-As the battery gets discharged, that voltage will go down. The output voltage of a LiPo battery is in this range (more or less):
+A battery monitor needs to read the output voltage of the battery
+(*not* the powerboost output voltage), this is,
+the voltage at the positive terminal
+(the negative terminal is wired to ground - `GND`).
+As the battery gets discharged, that voltage will go down.
+The output voltage of a LiPo battery is in this range (more or less):
 
 - 4.0V to 5.0V when the powerboost module is charging the battery.
 - 3.7V when the battery is fully charged.
 - Over 2.4V or less when the battery is discharged.
   The powerboost module will cut power to avoid over discharge.
 
-In some way, this output voltage should be read through an ADC pin, however, there are two restrictions:
+In some way, this output voltage should be read through an ADC pin,
+however, there are two restrictions:
 
-- The output voltage of the battery exceeds 3.3V and would damage the DevKit board, so that voltage has to drop down to a suitable range.
-- Reading the output voltage could discharge the battery itself, so the battery monitor should not draw any relevant current.
+- The output voltage of the battery exceeds 3.3V
+  and would damage the DevKit board,
+  so that voltage has to drop down to a suitable range.
+- Reading the output voltage could discharge the battery itself,
+  so the battery monitor should not draw any relevant current.
 
 ### Battery monitor
 
 This circuit is switched on and off by the means of an NPN-PNP pair.
-It will not draw any relevant current except for a few milliseconds every few minutes.
+It will not draw any relevant current
+except for a few milliseconds every few minutes.
 
 This circuit uses the following terminals:
 
-- **Battery (+)** (battery positive terminal): a wire has to be soldered to that terminal at the powerboost module.
-- **battEN** pin: enables or disables the circuit. Attached to an output-capable GPIO pin at the DevKit board.
-- **battREAD** pin: provides the current battery level. Attached to an ADC-capable GPIO pin at the DevKit board.
+- **Battery (+)** (battery positive terminal):
+  a wire has to be soldered to that terminal at the powerboost module.
+- **battEN** pin: enables or disables the circuit.
+  Attached to an output-capable GPIO pin at the DevKit board.
+- **battREAD** pin: provides the current battery level.
+  Attached to an ADC-capable GPIO pin at the DevKit board.
 
-`GND` pin is shared with the main circuit, wired to `GND` at the powerboost module.
+`GND` pin is shared with the main circuit,
+wired to `GND` at the powerboost module.
 
 ![Battery monitor circuit](./BatteryMonitor_falstad.png)
 
-[This simulation at falstad.com](https://falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqoQFMBaMMAKABcQmwVxieHCAFl48eEGJTAFc2DAgSCMg4nijQE2DXjxZshMIJKFVYOCAAmdAGYBDAK4AbNiwDmnbD1zCGHkB6oBLADunHhUYaFUTIRQLABOUCARVGAYMSmm8PGJqekgmDxUaPCQ2UxpIpzMYnw5JaUJAsLVnELgFSn1we6ekN6+BeDdRRj8A6OxIU35E9NoqqUc0y3TEdhVnBIG2IL4CHhgsnjKSAwSeoQY3NjMCEKQ+shUlraOzgAyVRVgtQwod5UUiBbA4AM50PzQdalKaCVTJJKBADyOW+gma30mPRm-Dag1KAA8qn0qsROBgydEQMIYgAjGxsNh0OIATwAFAAdAAOAEoWES-ghyGBCKc0GJjNTwKp6YyAKIAOX5IBI4FF4GUatUzRlDLYACU5QBBAAiLAAypEqjFolERYkYiDwYkMCx9daom0mL82gFqbREgF1G6PZw4ZwUChvOG-bspX6JCHbdjvWNCok49hoOQE8H3cm7bUE-6-IG1AgkyK7TbI957bGqFnoYG86H7X8o2qy3GUNmy4n81W-Pwfp501Qe1D+8GBYMBPx-hAGAgyc0qABZI0ADWVPkE-EUEcoYeEa5AAGEABY2OIuACWADsXBzQQB6F-nm8uGwP8wAe13bBNAjVRBSif4pVMC9r1vOhzBfd9QU-W8bHMGxAJ2PxvEjTxyDPE071BABjGCXDghCXxNOhiK-VD0NpdxDHJExMJjXdCAXDJQNSSCYnNO8AFtHAZcjQVlJlWRfAA3P8nBsMjdyucBwEjKVmhiAA1WS2BsAArOgX0sF9ZWZABbmwX1BQThP-XcRRpUC8CQJSdRAAAhPVmXZbk+SAA) shows how it works, but note that the rectangle is not part of the circuit.
+[This simulation at falstad.com](https://falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqoQFMBaMMAKABcQmwVxieHCAFl48eEGJTAFc2DAgSCMg4nijQE2DXjxZshMIJKFVYOCAAmdAGYBDAK4AbNiwDmnbD1zCGHkB6oBLADunHhUYaFUTIRQLABOUCARVGAYMSmm8PGJqekgmDxUaPCQ2UxpIpzMYnw5JaUJAsLVnELgFSn1we6ekN6+BeDdRRj8A6OxIU35E9NoqqUc0y3TEdhVnBIG2IL4CHhgsnjKSAwSeoQY3NjMCEKQ+shUlraOzgAyVRVgtQwod5UUiBbA4AM50PzQdalKaCVTJJKBADyOW+gma30mPRm-Dag1KAA8qn0qsROBgydEQMIYgAjGxsNh0OIATwAFAAdAAOAEoWES-ghyGBCKc0GJjNTwKp6YyAKIAOX5IBI4FF4GUatUzRlDLYACU5QBBAAiLAAypEqjFolERYkYiDwYkMCx9daom0mL82gFqbREgF1G6PZw4ZwUChvOG-bspX6JCHbdjvWNCok49hoOQE8H3cm7bUE-6-IG1AgkyK7TbI957bGqFnoYG86H7X8o2qy3GUNmy4n81W-Pwfp501Qe1D+8GBYMBPx-hAGAgyc0qABZI0ADWVPkE-EUEcoYeEa5AAGEABY2OIuACWADsXBzQQB6F-nm8uGwP8wAe13bBNAjVRBSif4pVMC9r1vOhzBfd9QU-W8bHMGxAJ2PxvEjTxyDPE071BABjGCXDghCXxNOhiK-VD0NpdxDHJExMJjXdCAXDJQNSSCYnNO8AFtHAZcjQVlJlWRfAA3P8nBsMjdyucBwEjKVmhiAA1WS2BsAArOgX0sF9ZWZABbmwX1BQThP-XcRRpUC8CQJSdRAAAhPVmXZbk+SAA)
+shows how it works, but note that the rectangle is not part of the circuit.
 
 Needed parts:
 
 - 100K-ohms resistor (x2)
 - 110K-ohms resistor (x1), **1% tolerance**.
 - 200K-ohms resistors (x1), **1% tolerance**.
-- A bipolar junction transistor (x1), NPN type: any kind should work (for example: [BC637](https://www.onsemi.com/pdf/datasheet/bc637-d.pdf)).
-- A bipolar junction transistor (x1), PNP type: any kind should work (for example: [BC640](https://www.onsemi.com/pdf/datasheet/bc640-d.pdf)).
+- A bipolar junction transistor (x1), NPN type: any kind should work
+  (for example: [BC637](https://www.onsemi.com/pdf/datasheet/bc637-d.pdf)).
+- A bipolar junction transistor (x1), PNP type: any kind should work
+  (for example: [BC640](https://www.onsemi.com/pdf/datasheet/bc640-d.pdf)).
 
-In fact, any impedance will work as long as `battREAD` is below 3.3 volts at all times (assuming `battery(+)` is always below 5 volts).
-However, the higher the voltage drop, the less the accuracy in battery levels (state of charge).
+In fact, any impedance will work as long as `battREAD`
+is below 3.3 volts at all times (assuming `battery(+)` is always below 5 volts).
+However, the higher the voltage drop,
+the less the accuracy in battery levels (state of charge).
 
-Pay attention to the pin-out of your transistors. It *may not match* the one shown here.
+Pay attention to the pin-out of your transistors.
+It *may not match* the one shown here.
 
-Look at this [layout design](./BatteryMonitor.diy) using [DIY Layout Creator](https://github.com/bancika/diy-layout-creator).
+Look at this [layout design](./BatteryMonitor.diy) using
+[DIY Layout Creator](https://github.com/bancika/diy-layout-creator).
 
 ![Board design](./BatteryMonitor_diy.png)
 
@@ -88,13 +113,17 @@ Look at this [layout design](./BatteryMonitor.diy) using [DIY Layout Creator](ht
 
 This kind of circuit is built into some ESP32 boards.
 In such a case, there is no need to build this subsystem.
-However, we also provide the design in case you are short of available GPIO pins for the previous alternative.
+However, we also provide the design in case
+you are short of available GPIO pins for the previous alternative.
 The circuit uses the same terminals, except for `BattEN`, which is not needed.
 
-- **Battery (+)** pin (battery positive terminal). Usually not exposed in the alluded boards.
-- **battREAD** pin: provides the current battery voltage. May be exposed or not in the alluded boards.
+- **Battery (+)** pin (battery positive terminal).
+  Usually not exposed in the alluded boards.
+- **battREAD** pin: provides the current battery voltage.
+  May be exposed or not in the alluded boards.
   If not exposed, it will be wired internally to a certain GPIO.
-  If exposed (with another tag, for sure), you must wire it externally to an ADC-capable GPIO. Check the datasheet.
+  If exposed (with another tag, for sure),
+  you must wire it externally to an ADC-capable GPIO. Check the datasheet.
 
 ![Voltage divider for the battery monitor](./BatteryDivider_falstad.png)
 
@@ -105,14 +134,20 @@ Needed parts:
 - 110K-ohms resistor (x1), 1% tolerance.
 - 200K-ohms resistor (x1), 1% tolerance.
 
-In fact, any impedance above 100K-ohms will work as long as `battREAD` is below 3.3 volts at all times.
-Do not use lower impedance or this circuit will drain your battery quicker than the DevKit board itself.
-The higher the voltage drop, the less the accuracy in battery levels (state of charge).
+In fact, any impedance above 100K-ohms will work as long as `battREAD`
+is below 3.3 volts at all times.
+Do not use lower impedance or this circuit will drain your battery quicker
+than the DevKit board itself.
+The higher the voltage drop,
+the less the accuracy in battery levels (state of charge).
 
-This alternative will deplete your battery very slowly, even when the system is in a deep sleep state or not powered.
-An [external power latch circuit](../PowerLatch/PowerLatch_en.md) will **not prevent** this.
+This alternative will deplete your battery very slowly,
+even when the system is in a deep sleep state or not powered.
+An [external power latch circuit](../PowerLatch/PowerLatch_en.md)
+will **not prevent** this.
 
-An incomplete list of DevKits featuring a built-in voltage divider follows, along with their internal wiring:
+An incomplete list of DevKits featuring a built-in voltage divider follows,
+along with their internal wiring:
 
 | DevKit                                                                      | battREAD |
 | --------------------------------------------------------------------------- | -------- |
@@ -124,7 +159,8 @@ An incomplete list of DevKits featuring a built-in voltage divider follows, alon
 
 ## Fuel gauge
 
-A "fuel gauge" (not to be taken literally) is a specialized chip for accurate state of charge measurement.
+A "fuel gauge" (not to be taken literally) is a specialized chip
+for accurate state of charge measurement.
 
 This project supports the popular
 [MAX1704x](https://www.analog.com/en/parametricsearch/12979#/p0=max1704)
@@ -165,7 +201,8 @@ There is a **workaround** to utilize them, though:
 [take out](https://www.youtube.com/watch?v=8JM4oCpWnjU)
  the pull-up resistors shown in the image above.
 
-Use a low-cost multimeter in short-circuit detection mode to determine whether your module is V1.1.
+Use a low-cost multimeter in short-circuit detection mode
+to determine whether your module is V1.1.
 You have version 1.1 if there is an electrical connection
 between pins `(+)` and `Vcc`. Most low-cost copies are V1.1.
 
@@ -206,7 +243,8 @@ Don`t get fooled by the scale of the picture. This module is small.
 
 ![Sparkfun MAX17048](./Adafruit_MAX17048_module.jpg)
 
-You can see the pinout in the picture. There is no circuit involved here, just wiring:
+You can see the pin-out in the picture.
+There is no circuit involved here, just wiring:
 
 | Pin tag in Adafruit MAX17048 | Wired to                            |
 | ---------------------------- | ----------------------------------- |
@@ -230,13 +268,17 @@ Wiring to a powerboost or DevKit board with built-in battery support:
 ## Firmware customization (simple voltage divider or battery monitor)
 
 Only a rough estimation of battery charge can be provided out of the box.
-Battery level will be unreliable until the battery is fully charged for the first time.
+Battery level will be unreliable until the battery
+is fully charged for the first time.
 
 For better results, a battery calibration procedure must be followed,
-which is extensively documented [here](../../../../src/Firmware/BatteryTools/BatteryCalibration/README.md) along with the required Arduino sketch.
+which is extensively documented
+[here](../../../../src/Firmware/BatteryTools/BatteryCalibration/README.md)
+along with the required Arduino sketch.
 **This is not mandatory but highly recommended**.
 
-Customization takes place at file [CustomSetup.ino](../../../../src/Firmware/CustomSetup/CustomSetup.ino).
+Customization takes place at file
+[CustomSetup.ino](../../../../src/Firmware/CustomSetup/CustomSetup.ino).
 Ensure the following line of code is in place:
 
 ```c
@@ -245,9 +287,11 @@ Ensure the following line of code is in place:
 
 ### Battery monitor (design 1)
 
-Locate the line `#define BATTERY_ENABLE_READ_GPIO` and write a GPIO number to the right,
-where `battEN` is attached to. Locate the line `#define BATTERY_READ_GPIO` and
-write a GPIO number to the right, where `battREAD` is attached to. For example:
+Locate the line `#define BATTERY_ENABLE_READ_GPIO`
+and write a GPIO number to the right,
+where `battEN` is attached to. Locate the line `#define BATTERY_READ_GPIO`
+and write a GPIO number to the right,
+where `battREAD` is attached to. For example:
 
 ```c
 #define BATTERY_ENABLE_READ_GPIO 0
@@ -256,7 +300,8 @@ write a GPIO number to the right, where `battREAD` is attached to. For example:
 
 ### Simple voltage divider (design 2)
 
-Locate the line `#define BATTERY_READ_GPIO` and write a GPIO number to the right,
+Locate the line `#define BATTERY_READ_GPIO`
+and write a GPIO number to the right,
 where `battREAD` is attached to. Set `BATTERY_ENABLE_READ_GPIO` as shown below:
 
 ```c
@@ -278,7 +323,9 @@ However, if your chip uses a non-standard I2C address,
 you must provide the proper 7-bit address as the first parameter.
 The expected (standard) 7-bit address is 36 (hexadecimal).
 
-Your chip/module will share the I2C bus with [GPIO expanders](../Switches/Switches_en.md#gpio-expanders), if any.
+Your chip/module will share the I2C bus with
+[GPIO expanders](../Switches/Switches_en.md#gpio-expanders),
+if any.
 
 > [!NOTE]
 > If the chip/module is not powered or not found in the I2C bus,
@@ -302,8 +349,8 @@ Place a call to `batteryMonitor::setPowerOffSoC()`.
 The first parameter is a percentage of battery charge (0% to 100%).
 If the measured state of charge is below the given parameter,
 the system will go into deep sleep or power off before it stops working.
-This prevents the system from depleting the battery even if there is not enough power
-to keep it working.
+This prevents the system from depleting the battery even
+if there is not enough power to keep it working.
 Do not set too high.
 
 Call `batteryMonitor::setPowerOffSoC(0)` to disable this feature,
@@ -314,11 +361,14 @@ Do not enable this feature if your battery monitor is not reasonably accurate.
 
 ## Unknown state of charge
 
-The firmware will be unable to compute a proper state of charge in the following situations:
+The firmware will be unable to compute a proper
+state of charge in the following situations:
 
-- The battery is not properly wired to the battery monitor, voltage divider or fuel gauge.
+- The battery is not properly wired to the battery monitor,
+  voltage divider or fuel gauge.
 - The actual I2C address of the fuel gauge is not what this firmware expects.
 - The fuel gauge is not compatible with this firmware.
 - **The battery is being charged**.
 
-In those cases, you will get a constant state of charge of 66% at the host computer.
+In those cases,
+you will get a constant state of charge of 0% at the host computer.

@@ -50,10 +50,10 @@ public:
 // Auxiliary
 //------------------------------------------------------------------
 
-void get_current_battery_level(int level)
+void get_current_battery_level(const BatteryStatus &status)
 {
     // std::cout << "get_current_battery_level" << std::endl;
-    receivedBatteryLevel = level;
+    receivedBatteryLevel = status.stateOfCharge.value_or(0);
     received.release();
 }
 
@@ -126,7 +126,7 @@ void test3()
 int main()
 {
     BatteryCalibrationService::inject(new BatteryCalibrationMock());
-    OnBatteryLevel::subscribe(get_current_battery_level);
+    OnBatteryStatus::subscribe(get_current_battery_level);
     batteryMonitor::configure(TEST_RTC_GPIO1);
     hardware = static_cast<VoltageDividerMonitor *>(internals::batteryMonitor::getHardwareInstance());
     assert(hardware != nullptr);

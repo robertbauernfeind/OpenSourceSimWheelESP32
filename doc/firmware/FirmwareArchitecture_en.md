@@ -326,18 +326,18 @@ classDiagram
   ```mermaid
   flowchart LR
     OnShutDown@{ shape: stadium }
-    OnBatteryLevel@{ shape: stadium }
+    OnBatteryStatus@{ shape: stadium }
     OnLowBattery@{ shape: stadium }
     ui_pixels@{ shape: procs, label: "ui / pixels" }
     power -- notify --> OnShutDown
-    batteryMonitor -- notify --> OnBatteryLevel
+    batteryMonitor -- notify --> OnBatteryStatus
     batteryMonitor -- notify --> OnLowBattery
     OnShutDown -- subscribed --> ui_pixels
-    OnBatteryLevel -- subscribed --> hid
+    OnBatteryStatus -- subscribed --> hid
     OnLowBattery -- subscribed --> ui_pixels
   ```
 
-  [Render this diagram at mermaid.live](https://mermaid.live/view#pako:eNqNkstqwzAQRX9FzNqhey9KKenOodDsgqCMrXEskDVGj7rG-N_rR52kTRqqlWY4V9K9mh4KVgQplIbbokIXRPYmrRjXq91XMWy5tU-98BU2lAofUOlYi2FFnjEEcl1GH2TuYBm33-SfUNTvjf4k489E47jwiTCYk0mFhKjFg1ggCauu4Zac2GyE5aDLbtw9Xjx9YfLl7h1bHfgavjTxL8HZzu-oJtTH3BdO56Rm_GTsVmY3-Eqr69junQsJ1ORq1Gr8x37SSggV1SRhSk1RidEECdIOI4ox8L6zBaTBRUogNgoDbTUeHdY_my9qcr_2HMdjBWmJxo9Vg_bAXJ9qmtndMkzzTA1f4nzM_w)
+  [Render this diagram at mermaid.live](https://mermaid.live/view#pako:eNqNklFvgjAQx79Kc8_okIFoH5Zlc2-aJfNtIVkKLdIEWlLaICN89xWYTqcz61N79_vf9X9tC4mkDDCkuayTjCiN1m-RQHa9im1m9ErW4rFFVUZKhlGlCeWmQN0BeSJaM9VsNdGmusGtZf2N_gkZ_lHyPctPypRKJpWDchKzHKMIDEd3aIQiOOhKWTOFJhMkpOZpY3cPJ3cfmXjsvZGCa3kJn7n4l-LHz-9h9Whl4ipRPGZ0wI_Ork7tiiDj9HJwtwqDAwVTBeHUPmXbayPQGStYBP3cKEuJyXUEkegsSoyW20YkgLUyzAFTUqLZipOdIsV58IX29g8xJc0uA5ySvLKnkoh3KY8CNqCb8TsNv8oKmKBMPUsjNOBgkABuYQ94tpxP_fvlIghddx54YWizDWDPc6eu64ULG_SDMAg7Bz6HJu7Ud0Pfwq7NeaHvz3wHdqp33PfvvgBj1uoc)
 
   *OnShutDown* is a notification, not a command.
   However, the *ui* subsystem translates this event into a command

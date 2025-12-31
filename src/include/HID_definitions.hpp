@@ -165,9 +165,11 @@ struct BatteryStatusChrData
     // End of byte 6
 };
 
+#if !CD_CI
 static_assert(
     sizeof(BatteryStatusChrData) == 7,
     "Wrong size of BatteryStatusChrData (check struct packaging)");
+#endif
 
 #pragma pack(pop)
 

@@ -200,7 +200,7 @@ void TG_read()
     assert((rep3.cp_wm == (uint8_t)inputHubMock.clutchWorkingMode) && "Clutch WM not set");
     assert((rep3.alt_wm == (uint8_t)inputHubMock.altButtonsWorkingMode) && "ALT WM not set");
     assert((rep3.bitePoint == (uint8_t)inputHubMock.bitePoint) && "Bite point not set");
-    assert((rep3.simpleCmd == (uint8_t)UNKNOWN_BATTERY_LEVEL) && "Soc not set");
+    assert((rep3.simpleCmd == 0) && "Soc not set");
     assert((rep3.dpad_wm == (uint8_t)inputHubMock.dpadWorkingMode) && "DPAD WM not set");
     assert((rep3.secLock == (uint8_t)inputHubMock.securityLock) && "Security lock not set");
     assert((rep3.pulseWidth == (uint8_t)inputMock._fakePulseWidth) && "Pulse width not set");

@@ -160,10 +160,9 @@ public:
     bool connected = false;
     bool battery_chr_subscribed = false;
     bool input_report_chr_subscribed = false;
+    bool battery_status_chr_subscribed = false;
 
-    // Fix Windows notifications not being sent on reconnection
-    // See https://github.com/lemmingDev/ESP32-BLE-Gamepad/pull/257/files
-    void onAuthenticationComplete(NimBLEConnInfo &connInfo) override
+    void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)
     {
         if (autoPowerOffTimer != nullptr)
             esp_timer_stop(autoPowerOffTimer);
@@ -184,6 +183,29 @@ public:
         OnConnected::notify();
     }
 
+    // Fix Windows notifications not being sent on reconnection
+    // See https://github.com/lemmingDev/ESP32-BLE-Gamepad/pull/257/files
+    // void onAuthenticationComplete(NimBLEConnInfo &connInfo) override
+    // {
+    //     if (autoPowerOffTimer != nullptr)
+    //         esp_timer_stop(autoPowerOffTimer);
+    //     connected = true;
+    //     //************************************************
+    //     // Do not call internals::hid::reset() here
+    //     //************************************************
+    //     // Quoting h2zero:
+    //     //
+    //     // When Windows bonds with a device and subscribes
+    //     // to notifications/indications
+    //     // of the device characteristics it does not re-subscribe
+    //     // on subsequent connections.
+    //     // If a notification is sent when Windows reconnects
+    //     // it will overwrite the stored subscription value
+    //     // in the NimBLE stack configuration with an invalid value which
+    //     // results in notifications/indications not being sent.
+    //     OnConnected::notify();
+    // }
+
     void onDisconnect(
         NimBLEServer *pServer,
         NimBLEConnInfo &connInfo,
@@ -203,7 +225,12 @@ public:
             log_i("Subscribed to the battery level characteristic");
             battery_chr_subscribed = (subValue != 0);
         }
-        else
+        else if (pCharacteristic == battStatusChr)
+        {
+            log_i("Subscribed to the battery level status characteristic");
+            battery_status_chr_subscribed = (subValue != 0);
+        }
+        else if (pCharacteristic == inputGamePad)
         {
             log_i("Subscribed to the input report characteristic");
             input_report_chr_subscribed = (subValue != 0);
@@ -415,13 +442,26 @@ void internals::hid::begin(
         assert(
             battStatusChr &&
             "BLE: Unable to create the battery level status characteristic");
+        battStatusChr->setCallbacks(&connectionStatus);
 
         // Create HID reports
         inputGamePad = hidDevice->getInputReport(RID_INPUT_GAMEPAD);
-        FeatureReport::attachTo(hidDevice, RID_FEATURE_CAPABILITIES, CAPABILITIES_REPORT_SIZE);
-        FeatureReport::attachTo(hidDevice, RID_FEATURE_CONFIG, CONFIG_REPORT_SIZE);
-        FeatureReport::attachTo(hidDevice, RID_FEATURE_BUTTONS_MAP, BUTTONS_MAP_REPORT_SIZE);
-        FeatureReport::attachTo(hidDevice, RID_FEATURE_HARDWARE_ID, HARDWARE_ID_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice,
+            RID_FEATURE_CAPABILITIES,
+            CAPABILITIES_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice,
+            RID_FEATURE_CONFIG,
+            CONFIG_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice,
+            RID_FEATURE_BUTTONS_MAP,
+            BUTTONS_MAP_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice,
+            RID_FEATURE_HARDWARE_ID,
+            HARDWARE_ID_REPORT_SIZE);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_POWERTRAIN);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_ECU);
         OutputReport::attachTo(hidDevice, RID_OUTPUT_RACE_CONTROL);
@@ -485,18 +525,6 @@ void internals::hid::reportInput(
     }
 }
 
-void internals::hid::reportBatteryLevel(int level)
-{
-    if (connectionStatus.battery_chr_subscribed)
-    {
-        if (level > 100)
-            level = 100;
-        else if (level < 0)
-            level = 0;
-        hidDevice->setBatteryLevel(level, true);
-    }
-}
-
 void internals::hid::reportBatteryLevel(const BatteryStatus &status)
 {
     // -- Battery level status characteristic
@@ -543,10 +571,13 @@ void internals::hid::reportBatteryLevel(const BatteryStatus &status)
             result.ps_battery_charge_level = 1; // = good
     }
     // else result.ps_battery_charge_level = 0 = unknown
-    battStatusChr->notify(result, sizeof(result));
+    if (connectionStatus.battery_status_chr_subscribed)
+        battStatusChr->notify((const uint8_t *)&result, sizeof(result));
 
     // -- Battery level characteristic
-    hidDevice->setBatteryLevel(result.battery_level);
+    hidDevice->setBatteryLevel(
+        result.battery_level,
+        connectionStatus.battery_chr_subscribed);
 }
 
 void internals::hid::reportChangeInConfig()

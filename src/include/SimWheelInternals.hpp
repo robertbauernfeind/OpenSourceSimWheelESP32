@@ -49,7 +49,6 @@ namespace internals
          */
         void configureFakeMonitor(BatteryStatus *fakeStatus);
 
-
         /**
          * @brief Get the Hardware Instance object
          *
@@ -301,16 +300,6 @@ namespace internals
          *
          */
         void reportChangeInConfig();
-
-        /**
-         * @brief Report current battery level to the host computer
-         *
-         * @deprecated Use the BatteryStatus parameter
-         * @warning May be called before internals::hid::begin()
-         *
-         * @param batteryLevel Remaining battery charge as a percentage (0-100)
-         */
-        void reportBatteryLevel(int batteryLevel);
 
         /**
          * @brief Report current battery level and status to the host computer

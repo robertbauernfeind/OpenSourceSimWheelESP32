@@ -70,12 +70,14 @@ Wire `battery(+)` and `POWERBOOST_GND`, at least.
 ### Battery level
 
 1. Leave `battery(+)` unwired. Wait for 1 minute.
-2. In the control panel, battery level must show "66%" for "Proto 2".
+2. In the control panel, battery level must show "0%" for "Proto 2".
 3. Wire `Battery(+)` to the battery positive pole.
-4. Wait for 1 minute. Battery level must show anything but "66%", depending on your battery charge.
+4. Wait for 1 minute. Battery level must show anything but "0%",
+   depending on your battery charge.
 5. Wait for 5 to 30 minutes (depending on battery capacity).
    Whatever the battery level was, it must decrease at least 1%.
 6. Wire `Battery(+)` to `3V3` in the protoboard.
 7. The device may go to deep sleep.
    Check if the device is disconnected at the control panel.
-   However, if this does not happen, the battery level must show a very low percentage after a minute or so.
+   However, if this does not happen,
+   the battery level must show a very low percentage after a minute or so.

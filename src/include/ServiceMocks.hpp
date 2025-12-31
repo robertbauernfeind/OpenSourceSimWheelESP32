@@ -221,13 +221,13 @@ public:
 
 class FakeBatteryCalibration : public BatteryCalibrationService
 {
-    inline static int _batteryLevel = UNKNOWN_BATTERY_LEVEL;
+    inline static int _batteryLevel = 0;
     inline static uint16_t _batteryCalibrationQuantum = 103;
     inline static int _maxBatteryReadingEver = 0;
 
     static void resetToDefaults()
     {
-        _batteryLevel = UNKNOWN_BATTERY_LEVEL;
+        _batteryLevel = 0;
         _batteryCalibrationQuantum = 103;
         _maxBatteryReadingEver = 0;
     }

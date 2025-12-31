@@ -142,7 +142,7 @@ void commonHidStart()
 void internals::hid::common::getReady()
 {
     OnStart::subscribe(commonHidStart);
-    OnBatteryLevel::subscribe(internals::hid::reportBatteryLevel);
+    OnBatteryStatus::subscribe(internals::hid::reportBatteryLevel);
     HidService::inject(new HidServiceProvider());
 }
 
