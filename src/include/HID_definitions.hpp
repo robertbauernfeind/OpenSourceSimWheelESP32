@@ -35,15 +35,15 @@
 #define RID_FEATURE_HARDWARE_ID 0x05
 
 /// @brief Powertrain telemetry report ID
-#define RID_OUTPUT_POWERTRAIN 0x14   // 20 dec
+#define RID_OUTPUT_POWERTRAIN 0x14 // 20 dec
 /// @brief ECU telemetry report ID
-#define RID_OUTPUT_ECU 0x15          // 21 dec
+#define RID_OUTPUT_ECU 0x15 // 21 dec
 /// @brief Race control report ID
 #define RID_OUTPUT_RACE_CONTROL 0x16 // 22 dec
 /// @brief Gauges report ID
-#define RID_OUTPUT_GAUGES 0x17       // 23 dec
+#define RID_OUTPUT_GAUGES 0x17 // 23 dec
 /// @brief Pixel control report ID
-#define RID_OUTPUT_PIXEL 0x1E        // 30 dec
+#define RID_OUTPUT_PIXEL 0x1E // 30 dec
 
 //-------------------------------------------------------------------
 // Report sizes (bytes)
@@ -109,6 +109,67 @@
 
 /// @brief MTU size for BLE
 #define BLE_MTU_SIZE GAMEPAD_REPORT_SIZE + 1 + 14
+
+#pragma pack(push, 1)
+
+/// @brief Data format for the Battery Level Status characteristic (packed)
+struct BatteryStatusChrData
+{
+    /// @brief Flags: id field present
+    unsigned int flag_id_present : 1 = 1;
+    /// @brief Flags: battery level field present
+    unsigned int flag_battery_level_present : 1 = 1;
+    /// @brief Flags: additional status field present
+    unsigned int flag_additional_status_present : 1 = 1;
+    /// @brief Flags: reserved for future use
+    unsigned int flag_reserved : 5 = 0;
+
+    // End of byte 0
+
+    /// @brief Power state: is battery present
+    unsigned int ps_battery_present : 1 = 0;
+    /// @brief Power state: is wired external power present
+    unsigned int ps_wired_ext_power : 2 = 0;
+    /// @brief Power state: is wireless external power present
+    unsigned int ps_wireless_ext_power : 2 = 0;
+    /// @brief Power state: battery charging status
+    unsigned int ps_battery_charge_state : 2 = 0;
+    /// @brief Power state: summarized state of charge
+    unsigned int ps_battery_charge_level : 2 = 0;
+    /// @brief Power state: charging type
+    unsigned int ps_charging_type : 3 = 0;
+    /// @brief Power state: charging fault reason
+    unsigned int ps_fault_reason : 3 = 0;
+    /// @brief Power state: reserved for future use
+    unsigned int ps_reserved : 1 = 0;
+
+    // End of bytes 1-2
+
+    /// @brief Field: Battery identifier
+    uint16_t id = 0x106;
+
+    // End of bytes 3-4
+
+    /// @brief Field: Battery level
+    uint8_t battery_level = 0;
+
+    // End of byte 5
+
+    /// @brief Additional status: service required
+    unsigned int as_service_required : 1 = 0;
+    /// @brief Additional status: battery fault status
+    unsigned int as_battery_fault : 2 = 0;
+    /// @brief Additional status: reserved for future use
+    unsigned int as_reserved : 5 = 0;
+
+    // End of byte 6
+};
+
+static_assert(
+    sizeof(BatteryStatusChrData) == 7,
+    "Wrong size of BatteryStatusChrData (check struct packaging)");
+
+#pragma pack(pop)
 
 //-------------------------------------------------------------------
 // Hardware revision

@@ -712,39 +712,4 @@ public:
                (isBatteryPresent == other.isBatteryPresent) &&
                (usingExternalPower == other.usingExternalPower);
     }
-
-    /**
-     * @brief Compute the value of the "Battery level status" BLE characteristic
-     *
-     * @param[out] statusData 3 bytes long buffer. Not null.
-     */
-    void bleValue(uint8_t *statusData) const
-    {
-        assert(statusData && "BatteryStatus.bleValue(): statusData is null");
-        statusData[0] = 0;
-        statusData[1] = 0;
-        statusData[2] = 0;
-
-        // Battery presence
-        if (isBatteryPresent.value_or(false))
-            statusData[1] |= 0b00000001;
-
-        // Wired power
-        if (usingExternalPower.has_value())
-        {
-            if (usingExternalPower.value())
-                statusData[1] |= 0b00000010;
-        }
-        else
-            statusData[1] |= 0b00000100;
-
-        // Charging status
-        if (isCharging.has_value())
-        {
-            if (isCharging.value())
-                statusData[1] |= 0b00100000;
-            else
-                statusData[1] |= 0b01000000;
-        }
-    }
 };

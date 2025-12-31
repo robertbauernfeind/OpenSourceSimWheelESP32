@@ -506,10 +506,16 @@ int BatteryStatusChr::onRead(os_mbuf *buffer)
 {
     ApiResult rc = os_mbuf_append(
         buffer,
-        &data,
-        sizeof(data));
+        &value,
+        sizeof(value));
     rc.log_if("BatteryStatusChr::onRead() failed");
     return rc.to_attr_rc(true);
+}
+
+void BatteryStatusChr::set(const BatteryStatusChrData &new_value)
+{
+    value = new_value;
+    notify();
 }
 
 //------------------------------------------------------------------------------

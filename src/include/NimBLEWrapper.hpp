@@ -489,11 +489,15 @@ struct BatteryStatusChr : BLECharacteristic, BLEReadCallback
     virtual ble_gatt_chr_def definition() override;
 
     /**
-     * @brief 3-byte flags as defined by the BAS specification
-     * @note Exposed for efficiency
+     * @brief Set the value of the characteristic
      *
+     * @param new_value New value
      */
-    uint8_t data[3]{};
+    void set(const BatteryStatusChrData &new_value);
+
+private:
+    /// @brief Value of the characteristic
+    BatteryStatusChrData value{};
 };
 
 /**
