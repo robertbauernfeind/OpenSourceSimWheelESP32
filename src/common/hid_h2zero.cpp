@@ -479,7 +479,13 @@ void internals::hid::begin(
 
         // Start services
         hidDevice->startServices();
+
+        // Initialize the battery status to 100% charge and wired.
+        // Otherwise, non-battery-operated firmwares may cause
+        // a low battery warning in the hosting PC
         BatteryStatus defaultBatteryStatus;
+        defaultBatteryStatus.stateOfCharge = 100;
+        defaultBatteryStatus.usingExternalPower = true;
         internals::hid::reportBatteryLevel(defaultBatteryStatus);
         startBLEAdvertising();
     }
@@ -571,8 +577,9 @@ void internals::hid::reportBatteryLevel(const BatteryStatus &status)
             result.ps_battery_charge_level = 1; // = good
     }
     // else result.ps_battery_charge_level = 0 = unknown
+    battStatusChr->setValue((const uint8_t *)&result, sizeof(result));
     if (connectionStatus.battery_status_chr_subscribed)
-        battStatusChr->notify((const uint8_t *)&result, sizeof(result));
+        battStatusChr->notify();
 
     // -- Battery level characteristic
     hidDevice->setBatteryLevel(
