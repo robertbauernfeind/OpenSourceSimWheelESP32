@@ -31,6 +31,7 @@ BatteryStatus currentStatus;
 int receivedBatteryLevel;
 bool lowBattWitness = false;
 bool shutdownWitness = false;
+unsigned int lowBattCounter = 0;
 std::counting_semaphore<1> received{1};
 
 //------------------------------------------------------------------
@@ -57,6 +58,7 @@ void reset()
     currentStatus.stateOfCharge.reset();
     currentStatus.isBatteryPresent.reset();
     lowBattWitness = false;
+    lowBattCounter = 0;
     shutdownWitness = false;
 }
 
@@ -83,6 +85,7 @@ void get_current_battery_level(const BatteryStatus &status)
 void on_low_battery()
 {
     lowBattWitness = true;
+    lowBattCounter++;
     received.release();
 }
 
@@ -146,6 +149,22 @@ void test2()
                          BatteryService::call::getLastBatteryLevel());
 }
 
+void test3()
+{
+    std::cout << "- test 3 -" << std::endl;
+
+    reset();
+    currentStatus.stateOfCharge = 9;
+    DELAY_MS(1500);
+    waitFor("first on low batt");
+    assert<unsigned int>::more("successive onLowBatteryEvent 1", 0,
+                         lowBattCounter);
+    DELAY_MS(1500);
+    waitFor("second on low batt");
+    assert<unsigned int>::more("successive onLowBatteryEvent 2", 1,
+                         lowBattCounter);
+}
+
 //------------------------------------------------------------------
 //------------------------------------------------------------------
 // Entry point
@@ -167,4 +186,5 @@ int main()
 
     test1();
     test2();
+    test3();
 }

@@ -157,21 +157,21 @@ void batteryMonitorDaemonLoop(void *arg)
         {
             currentStatus = newBatteryStatus;
             OnBatteryStatus::notify(newBatteryStatus);
-            if (newBatteryStatus.stateOfCharge.has_value())
+        }
+        if (newBatteryStatus.stateOfCharge.has_value())
+        {
+            uint8_t newSoC =
+                newBatteryStatus.stateOfCharge.value_or(0);
+            if ((powerOff_soc > 0) && (newSoC <= powerOff_soc))
             {
-                uint8_t newSoC =
-                    newBatteryStatus.stateOfCharge.value_or(0);
-                if ((powerOff_soc > 0) && (newSoC <= powerOff_soc))
-                {
-                    // The DevKit must go to deep sleep before the battery
-                    // depletes, otherwise, it keeps
-                    // draining current even if there is
-                    // not enough voltage to turn it on.
-                    PowerService::call::shutdown();
-                }
-                else if (newSoC <= low_battery_soc)
-                    OnLowBattery::notify();
+                // The DevKit must go to deep sleep before the battery
+                // depletes, otherwise, it keeps
+                // draining current even if there is
+                // not enough voltage to turn it on.
+                PowerService::call::shutdown();
             }
+            else if (newSoC <= low_battery_soc)
+                OnLowBattery::notify();
         }
 
         // Delay to next sample
