@@ -788,6 +788,42 @@ However, this project provides several alternate implementations:
 - *hid_dummy.cpp*: dummy implementation with no actual behavior.
   Provided to troubleshoot the custom firmware and for testing.
 
+### Relevant BLE implementation details
+
+- Regardless of the underlying stack,
+  no characteristic should be notified before the client is subscribed to.
+  However, the value should be set an made available for reading.
+  Otherwise, notifications get randomly disabled on MS Windows machines.
+  It took 4 years to hunt this bug.
+  Already paired devices don't resubscribe.
+  In that case, the stack stores and restores the subscription state.
+  It happens *after* the device is connected.
+
+- The *Battery Level* characteristic is mandatory even if the system
+  does not have a battery.
+
+- The Battery Service specification mandates to report a 0% battery level
+  if the state of charge is unknown.
+  This rule was not respected in previous versions of this project.
+
+- The Battery Service must be initialized to 100% battery level
+  (and wired status). Otherwise,
+  non-battery-operated systems may cause a weird "low battery"
+  warning in the hosting PC.
+
+- In summary, we interpret that non-battery-operated systems have
+  a constant, known state of charge of 100%.
+
+- The *Battery Level Status* characteristic,
+  which is optional in the Battery Service specification,
+  has been implemented to report charging status, battery and wire presence.
+  However, MS Windows does not take advantage of this information yet,
+  nor any app known to me (except for *nRF Connect*).
+
+- The *NimBLE* stack handles 0x2902 descriptors automatically and transparently,
+  but the *Bluedroid* stack requires those descriptor to be
+  explicitly created in code.
+
 ## Concurrency
 
 System concurrency comes from these OS task and daemons:
