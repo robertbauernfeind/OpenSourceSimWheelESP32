@@ -116,6 +116,13 @@ void erasePreviousCalibrationData()
         DELAY_MS(10000);
 }
 
+void reportBatteryLevel(int level)
+{
+    BatteryStatus status{};
+    status.stateOfCharge = level;
+    internals::hid::reportBatteryLevel(status);
+}
+
 // ----------------------------------------------------------------------------
 // Mocks
 // ----------------------------------------------------------------------------
@@ -205,7 +212,7 @@ void loop()
         internals::batteryCalibration::addSample(voltageDivider.lastBatteryReading);
         SaveSetting::notify(UserSetting::BATTERY_CALIBRATION_DATA);
         internals::hid::reset();
-        internals::hid::reportBatteryLevel(fakeBatteryLevel);
+        reportBatteryLevel(fakeBatteryLevel);
         if (++fakeBatteryLevel > 100)
             fakeBatteryLevel = 30;
         // The user does not see this message,
