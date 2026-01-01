@@ -136,11 +136,6 @@ void internals::hid::reportInput(
     }
 }
 
-void internals::hid::reportBatteryLevel(int level)
-{
-    // Do nothing
-}
-
 void internals::hid::reportBatteryLevel(const BatteryStatus &status)
 {
     // Do nothing
