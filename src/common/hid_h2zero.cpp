@@ -551,7 +551,8 @@ void internals::hid::reportBatteryLevel(const BatteryStatus &status)
         result.ps_wired_ext_power = 2; // = unknown
 
     // Charging status
-    if (status.isCharging.has_value())
+    if (status.isBatteryPresent.value_or(false) &&
+        status.isCharging.has_value())
     {
         result.ps_battery_charge_state =
             (status.isCharging.value())
