@@ -113,6 +113,7 @@
 #pragma pack(push, 1)
 
 /// @brief Data format for the Battery Level Status characteristic (packed)
+/// @note Initialized for non-battery-operated firmwares
 struct BatteryStatusChrData
 {
     /// @brief Flags: id field present
@@ -129,13 +130,13 @@ struct BatteryStatusChrData
     /// @brief Power state: is battery present
     unsigned int ps_battery_present : 1 = 0;
     /// @brief Power state: is wired external power present
-    unsigned int ps_wired_ext_power : 2 = 0;
+    unsigned int ps_wired_ext_power : 2 = 1;
     /// @brief Power state: is wireless external power present
     unsigned int ps_wireless_ext_power : 2 = 0;
     /// @brief Power state: battery charging status
     unsigned int ps_battery_charge_state : 2 = 0;
     /// @brief Power state: summarized state of charge
-    unsigned int ps_battery_charge_level : 2 = 0;
+    unsigned int ps_battery_charge_level : 2 = 1;
     /// @brief Power state: charging type
     unsigned int ps_charging_type : 3 = 0;
     /// @brief Power state: charging fault reason
@@ -151,7 +152,7 @@ struct BatteryStatusChrData
     // End of bytes 3-4
 
     /// @brief Field: Battery level
-    uint8_t battery_level = 0;
+    uint8_t battery_level = 100;
 
     // End of byte 5
 
@@ -165,6 +166,7 @@ struct BatteryStatusChrData
     // End of byte 6
 };
 
+// For unknown reasons, the x86 compiler ignores the pragma pack directive
 #if !CD_CI
 static_assert(
     sizeof(BatteryStatusChrData) == 7,

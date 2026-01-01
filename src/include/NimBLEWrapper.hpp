@@ -442,11 +442,6 @@ struct BatteryLevelChr : BLECharacteristic, BLEReadCallback
     /// @brief Characteristic UUID
     inline static const ble_uuid16_t uuid = BLE_UUID16_INIT(0x2A19);
 
-    BatteryLevelChr() noexcept;
-    BatteryLevelChr(const BatteryLevelChr &) noexcept = default;
-    BatteryLevelChr(BatteryLevelChr &&) noexcept = default;
-    BatteryLevelChr &operator=(const BatteryLevelChr &) noexcept = default;
-    BatteryLevelChr &operator=(BatteryLevelChr &&) noexcept = default;
     virtual int onRead(os_mbuf *buffer) override;
     virtual ble_gatt_chr_def definition() override;
 
@@ -475,7 +470,7 @@ private:
         },
         EMPTY_ble_gatt_cpfd,
     };
-    uint8_t value;
+    uint8_t value{100};
     ble_gatt_dsc_def dsc_def[2]{};
 };
 

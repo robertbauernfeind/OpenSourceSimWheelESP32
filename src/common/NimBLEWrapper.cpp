@@ -453,10 +453,6 @@ void BLECharacteristic::setSubscription_if(
 // BatteryLevelChr
 //------------------------------------------------------------------------------
 
-BatteryLevelChr::BatteryLevelChr() noexcept : value{100}
-{
-}
-
 ble_gatt_chr_def BatteryLevelChr::definition()
 {
     ble_gatt_chr_def result = EMPTY_ble_gatt_chr_def;

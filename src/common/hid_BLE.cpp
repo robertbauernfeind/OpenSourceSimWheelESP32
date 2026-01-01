@@ -38,7 +38,8 @@ BatteryStatusChrData toBleBatteryStatus(
     {
         if (status.usingExternalPower.value())
             result.ps_wired_ext_power = 1; // = yes
-        // else result.ps_wired_ext_power = 0 = no;
+        else
+            result.ps_wired_ext_power = 0; // = no
     }
     else
         result.ps_wired_ext_power = 2; // = unknown
@@ -51,7 +52,8 @@ BatteryStatusChrData toBleBatteryStatus(
                 ? 1  // = charging
                 : 2; // = discharging (active)
     }
-    // else result.ps_battery_charge_state = 0 = unknown
+    else
+        result.ps_battery_charge_state = 0; // = unknown
 
     // Battery level
     // (must be identical to the value of the battery level characteristic)
@@ -69,7 +71,8 @@ BatteryStatusChrData toBleBatteryStatus(
         else
             result.ps_battery_charge_level = 1; // = good
     }
-    // else result.ps_battery_charge_level = 0 = unknown
+    else
+        result.ps_battery_charge_level = 0; // = unknown
 
     return result;
 }
@@ -601,6 +604,14 @@ void internals::hid::begin(
         // Start services
         hidDevice->startServices();
         hidDevice->setBatteryLevel(0);
+        // Initialize the battery status to 100% charge and wired.
+        // Otherwise, non-battery-operated firmwares may cause
+        // a low battery warning in the hosting PC
+        BatteryStatus defaultBatteryStatus;
+        defaultBatteryStatus.stateOfCharge = 100;
+        defaultBatteryStatus.usingExternalPower = true;
+        internals::hid::reportBatteryLevel(defaultBatteryStatus);
+
         connectionStatus.onDisconnect(pServer); // start advertising
     }
 }
