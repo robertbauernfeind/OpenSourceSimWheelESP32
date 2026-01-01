@@ -33,7 +33,7 @@ uint64_t _inputsLow;
 bool internals::hid::isConnected() { return true; }
 bool internals::hid::supportsCustomHardwareID() { return false; }
 void internals::hid::reportChangeInConfig() {}
-void internals::hid::reportBatteryLevel(int batteryLevel) {}
+void internals::hid::reportBatteryLevel(const BatteryStatus &status) {}
 
 void internals::hid::reset()
 {
