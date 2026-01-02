@@ -34,10 +34,7 @@ public:
      */
     virtual void getStatus(BatteryStatus &currentStatus)
     {
-        currentStatus.stateOfCharge.reset();
-        currentStatus.isCharging.reset();
-        currentStatus.isBatteryPresent.reset();
-        currentStatus.usingExternalPower.reset();
+        currentStatus.reset();
     }
 
     /**

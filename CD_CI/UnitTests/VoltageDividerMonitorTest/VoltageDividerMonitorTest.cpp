@@ -75,7 +75,7 @@ void waitFor(std::string message = "")
 void test1()
 {
 
-    std::cout << "- test 1 -" << std::endl;
+    std::cout << "- test 1 (ADC value injection)-" << std::endl;
     internals::hal::gpio::setFakeADCReading({2000});
     DELAY_MS(2000);
     waitFor("1");
@@ -96,7 +96,7 @@ void test2()
     assert<bool>::equals("known wired power state", true, status.usingExternalPower.has_value());
     assert<bool>::equals("wired power state", true, status.usingExternalPower.value());
     assert<bool>::equals("known battery presence", false, status.isBatteryPresent.has_value());
-    assert<bool>::equals("unknown SoC state", false, status.stateOfCharge.has_value());
+    assert<bool>::equals("known SoC state", false, status.stateOfCharge.has_value());
 }
 
 void test3()
@@ -111,9 +111,43 @@ void test3()
     assert<bool>::equals("charging state", false, status.isCharging.value());
     assert<bool>::equals("known wired power state", true, status.usingExternalPower.has_value());
     assert<bool>::equals("wired power state", true, status.usingExternalPower.value());
-    assert<bool>::equals("unknown SoC state", false, status.stateOfCharge.has_value());
+    assert<bool>::equals("known SoC state", false, status.stateOfCharge.has_value());
     assert<bool>::equals("known battery presence", true, status.isBatteryPresent.has_value());
     assert<bool>::equals("battery presence", false, status.isBatteryPresent.value());
+}
+
+void test4()
+{
+    BatteryStatus status;
+    std::cout << "- test 4 (constant voltage charging simulation) -" << std::endl;
+    internals::hal::gpio::setFakeADCReading({3500, 3560, 3540, 3520});
+    DELAY_MS(2000);
+    waitFor("4");
+    BatteryService::call::getStatus(status);
+    assert<bool>::equals("known charging state", true, status.isCharging.has_value());
+    assert<bool>::equals("charging state", true, status.isCharging.value());
+    assert<bool>::equals("known wired power state", true, status.usingExternalPower.has_value());
+    assert<bool>::equals("wired power state", true, status.usingExternalPower.value());
+    assert<bool>::equals("known SoC state", false, status.stateOfCharge.has_value());
+    assert<bool>::equals("known battery presence", false, status.isBatteryPresent.has_value());
+}
+
+void test5()
+{
+    BatteryStatus status;
+    std::cout << "- test 5 (discharging simulation) -" << std::endl;
+    internals::hal::gpio::setFakeADCReading({2000, 2020, 1990, 2005});
+    DELAY_MS(2000);
+    waitFor("4");
+    BatteryService::call::getStatus(status);
+    assert<bool>::equals("known charging state", true, status.isCharging.has_value());
+    assert<bool>::equals("charging state", false, status.isCharging.value());
+    assert<bool>::equals("known wired power state", false, status.usingExternalPower.has_value());
+    assert<bool>::equals("known SoC state", true, status.stateOfCharge.has_value());
+    assert<bool>::equals("known battery presence", true, status.isBatteryPresent.has_value());
+    assert<bool>::equals("battery presence", true, status.isBatteryPresent.value());
+    assert<int>::more("SoC>18", 18, receivedBatteryLevel);
+    assert<int>::less("SoC<21", 21, receivedBatteryLevel);
 }
 
 //------------------------------------------------------------------
@@ -136,6 +170,8 @@ int main()
     test1();
     test2();
     test3();
+    test4();
+    test5();
 
     return 0;
 }

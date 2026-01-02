@@ -420,6 +420,14 @@ public:
                (isBatteryPresent == other.isBatteryPresent) &&
                (usingExternalPower == other.usingExternalPower);
     }
+
+    inline void reset() noexcept
+    {
+        stateOfCharge.reset();
+        isCharging.reset();
+        isBatteryPresent.reset();
+        usingExternalPower.reset();
+    }
 };
 
 #pragma pack(push, 1)
