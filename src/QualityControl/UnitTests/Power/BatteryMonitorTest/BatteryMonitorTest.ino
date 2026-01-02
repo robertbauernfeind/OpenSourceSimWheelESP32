@@ -100,6 +100,7 @@ void loop()
     printStatusBool("Charging", status.isCharging);
     printStatusBool("Wired power", status.usingExternalPower);
     printStatusUint8("SoC", status.stateOfCharge);
+    // Serial.printf("ADC reading: %d\n", hw->lastBatteryReading);
 
     Serial.println("Done.");
     DELAY_MS(5000);
