@@ -72,6 +72,46 @@ void BatteryCharger::update(BatteryStatus &status)
 }
 
 //-------------------------------------------------------------------
+// Internal macros
+//-------------------------------------------------------------------
+
+/**
+ * @brief Guess the battery status
+ *
+ * @param[in,out] currentStatus Battery status
+ * @param[in] seemsToBeCharging True if the battery seems to be charging
+ * @param[in] success True if the SoC was successfully read
+ * @param[in] soc State of charge
+ */
+void guessBatteryStatus(
+    BatteryStatus &currentStatus,
+    bool seemsToBeCharging,
+    bool success,
+    uint8_t soc)
+{
+    if (seemsToBeCharging)
+    {
+        // The battery is charging, so SoC is unreliable
+        currentStatus.isCharging = true;
+        currentStatus.usingExternalPower = true;
+    }
+    else if (success)
+    {
+        // There is a battery and is not charging
+        currentStatus.isCharging = false;
+        currentStatus.isBatteryPresent = true;
+        currentStatus.stateOfCharge = soc;
+    }
+    else
+    {
+        // There is no battery
+        currentStatus.isBatteryPresent = false;
+        currentStatus.isCharging = false;
+        currentStatus.usingExternalPower = true;
+    }
+}
+
+//-------------------------------------------------------------------
 // MAX1704x hardware
 //-------------------------------------------------------------------
 
@@ -162,12 +202,12 @@ void MAX1704x::getStatus(BatteryStatus &currentStatus)
     // Use witnesses if available
     BatteryCharger::update(currentStatus);
 
-    uint8_t currentSoC;
     uint8_t worstBatteryLevel = 100;
     bool seemsToBeCharging = currentStatus.isCharging.value_or(false);
     bool success = false;
     for (uint8_t i = 0; i < 10; i++)
     {
+        uint8_t currentSoC;
         if (read_SoC(currentSoC))
         {
             success = true;
@@ -177,26 +217,11 @@ void MAX1704x::getStatus(BatteryStatus &currentStatus)
         }
         DELAY_MS(100);
     }
-    if (seemsToBeCharging)
-    {
-        // The battery is charging, so SoC is unreliable
-        currentStatus.isCharging = true;
-        currentStatus.usingExternalPower = true;
-    }
-    else if (success)
-    {
-        // There is a battery and is not charging
-        currentStatus.isCharging = false;
-        currentStatus.isBatteryPresent = true;
-        currentStatus.stateOfCharge = worstBatteryLevel;
-    }
-    else
-    {
-        // There is no battery
-        currentStatus.isBatteryPresent = false;
-        currentStatus.isCharging = false;
-        currentStatus.usingExternalPower = true;
-    }
+    guessBatteryStatus(
+        currentStatus,
+        seemsToBeCharging,
+        success,
+        worstBatteryLevel);
 }
 
 //-------------------------------------------------------------------
@@ -307,27 +332,11 @@ void VoltageDividerMonitor::getStatus(BatteryStatus &currentStatus)
         }
         DELAY_MS(100);
     }
-    if (seemsToBeCharging)
-    {
-        // The battery is charging, so SoC is unreliable
-        currentStatus.isBatteryPresent = true;
-        currentStatus.isCharging = true;
-        currentStatus.usingExternalPower = true;
-    }
-    else if (success)
-    {
-        // There is a battery and is not charging
-        currentStatus.isCharging = false;
-        currentStatus.isBatteryPresent = true;
-        currentStatus.stateOfCharge = worstBatteryLevel;
-    }
-    else
-    {
-        // There is no battery
-        currentStatus.isBatteryPresent = false;
-        currentStatus.isCharging = false;
-        currentStatus.usingExternalPower = true;
-    }
+    guessBatteryStatus(
+        currentStatus,
+        seemsToBeCharging,
+        success,
+        worstBatteryLevel);
 }
 
 //-------------------------------------------------------------------
