@@ -122,7 +122,7 @@ thus not requiring a translation unit.
 | firmware.cpp               | Firmware initialization                                                |
 | HAL.cpp                    | Underlying ESP-IDF API                                                 |
 | hid_«implementation».cpp   | Underlying HID stack or wrapper                                        |
-| hidCommon.cpp              | Features available through the companion app or SimHub                 |
+| hidCommon.cpp              | Features available through the companion app or SimHub (see note)      |
 | InputHardware.cpp          | Input hardware design                                                  |
 | inputHub.cpp               | Device operation through specific button press combinations            |
 | inputMap.cpp               | Firmware-defined or user-defined input numbers                         |
@@ -134,6 +134,13 @@ thus not requiring a translation unit.
 | storage.cpp                | User settings that require long-term storage                           |
 | telemetry.cpp              | Telemetry data                                                         |
 | ui.cpp                     | Support for custom user interfaces                                     |
+
+Note:
+
+- Exceptionally, `hidCommon.cpp` includes common code related to
+  BLE connectivity.
+  This breaks the principle of single responsibility but is
+  required to factorize code.
 
 ## Approach to dependency injection
 

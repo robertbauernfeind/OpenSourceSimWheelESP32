@@ -359,6 +359,21 @@ which is the default.
 *Advice*:
 Do not enable this feature if your battery monitor is not reasonably accurate.
 
+### Charging witness
+
+If your DevKit board features a battery charger and a charging witness signal,
+the firmware can take advantage of it.
+Place a call to `batteryMonitor::setChargingWitness()` with the following
+parameters:
+
+1. Input pin number where the witness signal is attached to.
+2. `true` if the witness signal is low when charging
+   and high when not charging (negative logic), `false` otherwise.
+3. `true` to enable an internal pull resistor, `false` otherwise.
+
+If the witness signal works in open drain mode,
+you should call `batteryMonitor::setChargingWitness(<pin>,true,true);`.
+
 ## Unknown state of charge
 
 The firmware will be unable to compute a proper
@@ -370,5 +385,8 @@ state of charge in the following situations:
 - The fuel gauge is not compatible with this firmware.
 - **The battery is being charged**.
 
-In those cases,
-you will get a constant state of charge of 0% at the host computer.
+In those cases, you will get a constant state of charge at the host computer:
+
+- 66% if the battery is being charged.
+  The firmware is unable to get a reliable value in this case.
+- 0% otherwise.
