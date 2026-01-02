@@ -125,4 +125,6 @@ int main()
      assert(
         ((received.fw == 33) && (received.alt == 99) && (received.noAlt == 99)) &&
         "map not retrieved");
+
+    return 0;
 }

@@ -318,4 +318,6 @@ int main()
     TG_bite_point();
     TG_map();
     TG_hid();
+
+    return 0;
 }

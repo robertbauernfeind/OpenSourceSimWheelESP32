@@ -96,4 +96,6 @@ int main()
     r30.group = 0xFE;
     internals::hid::common::onOutput(RID_OUTPUT_PIXEL, REPORT30BYTES(r30), sizeof(r30));
     assertPixel("Reset", PixelGroup::GRP_TELEMETRY, 0, 0, false);
+
+    return 0;
 }

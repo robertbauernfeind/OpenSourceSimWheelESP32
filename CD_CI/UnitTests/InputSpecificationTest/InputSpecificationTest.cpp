@@ -83,4 +83,6 @@ int main()
     ExpanderTest();
     ShiftRegisterTest();
     RotaryCodedSwitchTest();
+
+    return 0;
 }

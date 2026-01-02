@@ -102,4 +102,6 @@ int main()
     assert(data.gauges.oilTemperature == 1215);
     assert(data.gauges.relativeRemainingFuel == 1);
     assert(data.gauges.absoluteRemainingFuel == 116);
+
+    return 0;
 }

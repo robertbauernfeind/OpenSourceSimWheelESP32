@@ -233,4 +233,6 @@ int main()
     test5();
     test6();
     test7();
+
+    return 0;
 }

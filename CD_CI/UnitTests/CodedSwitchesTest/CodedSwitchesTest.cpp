@@ -256,4 +256,6 @@ int main()
     expected_base = (uint64_t)spec1.at(1) | (uint64_t)spec2.at(14);
     send(base | (uint64_t)ur1 | (uint64_t)ur2 | (uint64_t)ur3);
     assert<uint64_t>::equals("4", expected_base | (uint64_t)ur1 | (uint64_t)ur2 | (uint64_t)ur3, currentLow);
+
+    return 0;
 }

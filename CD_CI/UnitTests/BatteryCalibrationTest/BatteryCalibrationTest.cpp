@@ -263,4 +263,6 @@ int main()
     internals::batteryCalibration::clear();
     v = BatteryCalibrationService::call::getBatteryLevelAutoCalibrated(2371);
     assert<bool>::equals("Save data", true, saved);
+
+    return 0;
 }

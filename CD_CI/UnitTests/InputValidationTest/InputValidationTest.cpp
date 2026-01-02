@@ -323,4 +323,6 @@ int main()
     RotaryEncoderTest();
     ButtonTest();
     RotaryCodedSwitchTest();
+
+    return 0;
 }

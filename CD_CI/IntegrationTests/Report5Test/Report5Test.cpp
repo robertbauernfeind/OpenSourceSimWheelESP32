@@ -135,4 +135,6 @@ int main()
     assert(
         ((custom.vid == 0) && (custom.pid == 0)) &&
         "Invalid custom hw ID after reset to factory defaults");
+
+    return 0;
 }

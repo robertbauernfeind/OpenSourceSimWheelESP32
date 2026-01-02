@@ -902,4 +902,6 @@ int main()
 
     std::cout << ("- simulate neutral gear input -") << std::endl;
     TG_neutralGear();
+
+    return 0;
 }
