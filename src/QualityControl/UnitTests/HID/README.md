@@ -218,8 +218,6 @@ each command. Type "?" to reprint the last status.
    (make sure both geolocation and Bluetooth radio are enabled).
 3. Reset the device.
 4. Discover the device and connect (but do not pair).
-   *Exception*:
-   the implementation based on *h2zero/NimBLE-Arduino* requires pairing.
 5. Expand the *Battery Service* and the *Battery Level Status* characteristic.
    Subscribe to that characteristic.
 6. For each command (described above) cycle through all possible values.
