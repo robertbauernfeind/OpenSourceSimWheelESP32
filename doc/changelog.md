@@ -1,5 +1,37 @@
 # Change log (and release notes)
 
+## 7.8.0
+
+- The *Battery Level Status* characteristic is now supported for all
+  BLE implementations
+  (not to be confused with the *Battery Level* characteristic).
+  This characteristic reports battery presence, power wire presence
+  and charging/discharging status to the host computer.
+- Unfortunately, MS Windows does not take advantage of this information yet.
+  So, this release does not make any difference to the end user.
+- According to the *Battery Service* specification,
+  the *Battery Level Status* characteristic is optional, so
+  most phone and desktop applications also ignores it.
+- Now, the reported battery level will be 0% if there is no battery attached
+  or the battery monitor is not configured properly.
+- The firmware can detect whether the battery is being charged
+  but cannot determine a reliable battery level in that case.
+  It therefore reports a constant 66% battery level,
+  preventing unwanted "low battery" warnings on the host computer.
+- Custom setups not having a battery will report a constant 100% battery level
+  to the host computer.
+- There are two new, **optional**, public,
+  API calls in the `batteryMonitor` namespace:
+  - `setExternalPowerWitness()`: use a GPIO pin to sense wired power.
+    The firmware has no use for this right now,
+    but wire presence is reported to the host computer via BLE.
+    In case you want to use it,
+    you must drop the power wire voltage to 3.3V before it gets to the GPIO pin.
+    A voltage divider should do the job.
+  - `setChargingWitness()`: use a GPIO pin to detect if the battery is being
+    charged. The battery charger chip should provide this signal.
+    When not used (the default), the firmware will make a guess.
+
 ## 7.7.9
 
 - External dependencies have been updated and tested:
