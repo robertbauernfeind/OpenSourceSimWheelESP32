@@ -673,6 +673,32 @@ namespace batteryMonitor
      *                       Invalid values are ignored.
      */
     void setPowerOffSoC(uint8_t percentage);
+
+    /**
+     * @brief Set a GPIO pin to sense the power wire
+     * @warning Use a voltage divider to drop the power wire voltage
+     *          to 3.3 volts.
+     *
+     * @param sensePin GPIO pin to sense the power wire
+     */
+    void setExternalPowerWitness(InputGPIO sensePin);
+
+    /**
+     * @brief Set a GPIO pin to sense if the battery is being charged
+     *
+     * @param sensePin GPIO pin attached to the battery charger chip
+     * @param negativeLogic If true, LOW voltage means the battery is charging.
+     *                      If false, HIGH voltage means the battery
+     *                      is charging.
+     * @param enableInternalPullResistor If true, the corresponding internal
+     *                                   pullup/pulldown resistor is enabled.
+     *                                   Set to true if the witness signal
+     *                                   works in open drain.
+     */
+    void setChargingWitness(
+        InputGPIO sensePin,
+        bool negativeLogic = true,
+        bool enableInternalPullResistor = true);
 } // namespace batteryMonitor
 
 //-------------------------------------------------------------------

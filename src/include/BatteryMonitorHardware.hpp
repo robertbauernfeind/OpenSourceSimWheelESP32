@@ -48,6 +48,66 @@ public:
 };
 
 //-------------------------------------------------------------------
+// Optional hardware witnesses
+//-------------------------------------------------------------------
+
+/**
+ * @brief Hardware witnesses regarding battery chargers
+ *
+ */
+class BatteryCharger
+{
+public:
+    /**
+     * @brief Set a GPIO pin to sense the power wire
+     *
+     * @param sensePin GPIO pin to sense the power wire
+     * @param negativeLogic If true, LOW voltage means there is external power
+     *                      If false, HIGH voltage means there is
+     *                      external power
+     * @param enableInternalPullResistor If true, the corresponding internal
+     *                                   pullup/pulldown resistor is enabled.
+     *                                   Set to true if the wire sensing signal
+     *                                   works in open drain.
+     */
+    static void setExternalPowerWitness(
+        InputGPIO sensePin,
+        bool negativeLogic,
+        bool enableInternalPullResistor
+    );
+
+    /**
+     * @brief Set a GPIO pin to sense if the battery is being charged
+     *
+     * @param sensePin GPIO pin attached to the battery charger chip
+     * @param negativeLogic If true, LOW voltage means the battery is charging.
+     *                      If false, HIGH voltage means the battery
+     *                      is charging.
+     * @param enableInternalPullResistor If true, the corresponding internal
+     *                                   pullup/pulldown resistor is enabled.
+     *                                   Set to true if the witness signal
+     *                                   works in open drain.
+     */
+    static void setChargingWitness(
+        InputGPIO sensePin,
+        bool negativeLogic,
+        bool enableInternalPullResistor);
+
+    /**
+     * @brief Update the battery status according to the witnesses
+     *
+     * @param[in,out] status Battery status
+     */
+    static void update(BatteryStatus &status);
+
+private:
+    inline static InputGPIO _powerSensePin{};
+    inline static bool _powerSenseNegativeLogic = false;
+    inline static InputGPIO _chargingSensePin{};
+    inline static bool _chargingSenseNegativeLogic = false;
+};
+
+//-------------------------------------------------------------------
 // Testing
 //-------------------------------------------------------------------
 

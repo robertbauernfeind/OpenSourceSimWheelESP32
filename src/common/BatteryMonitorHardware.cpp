@@ -19,6 +19,59 @@
 #endif
 
 //-------------------------------------------------------------------
+// Hardware witnesses
+//-------------------------------------------------------------------
+
+void BatteryCharger::setExternalPowerWitness(
+    InputGPIO sensePin,
+    bool negativeLogic,
+    bool enableInternalPullResistor)
+{
+    sensePin.reserve();
+    BatteryCharger::_powerSensePin = sensePin;
+    if (enableInternalPullResistor)
+        internals::hal::gpio::forInput(sensePin, !negativeLogic, negativeLogic);
+    else
+        internals::hal::gpio::forInput(sensePin, false, false);
+    BatteryCharger::_powerSenseNegativeLogic = negativeLogic;
+}
+
+void BatteryCharger::setChargingWitness(
+    InputGPIO sensePin,
+    bool negativeLogic,
+    bool enableInternalPullResistor)
+{
+    sensePin.reserve();
+    BatteryCharger::_chargingSensePin = sensePin;
+    if (enableInternalPullResistor)
+        internals::hal::gpio::forInput(sensePin, !negativeLogic, negativeLogic);
+    else
+        internals::hal::gpio::forInput(sensePin, false, false);
+    BatteryCharger::_chargingSenseNegativeLogic = negativeLogic;
+}
+
+void BatteryCharger::update(BatteryStatus &status)
+{
+#if !CD_CI
+    bool level;
+    if (BatteryCharger::_powerSensePin)
+    {
+        level = GPIO_GET_LEVEL(BatteryCharger::_powerSensePin);
+        status.usingExternalPower =
+            level ^ BatteryCharger::_powerSenseNegativeLogic;
+    }
+    if (BatteryCharger::_chargingSensePin)
+    {
+        level = GPIO_GET_LEVEL(BatteryCharger::_chargingSensePin);
+        status.isCharging =
+            level ^ BatteryCharger::_chargingSenseNegativeLogic;
+        if (status.isCharging.value_or(false))
+            status.usingExternalPower = true;
+    }
+#endif
+}
+
+//-------------------------------------------------------------------
 // MAX1704x hardware
 //-------------------------------------------------------------------
 
@@ -42,7 +95,8 @@ bool MAX1704x::read(uint8_t regAddress, uint16_t &value)
     i2c_master_read_byte(cmd, ((uint8_t *)&value) + 1, I2C_MASTER_ACK);
     i2c_master_read_byte(cmd, ((uint8_t *)&value), I2C_MASTER_LAST_NACK);
     i2c_master_stop(cmd);
-    bool result = (i2c_master_cmd_begin(I2C_NUM_0, cmd, I2C_WAIT_TICKS) == ESP_OK);
+    bool result =
+        (i2c_master_cmd_begin(I2C_NUM_0, cmd, I2C_WAIT_TICKS) == ESP_OK);
     i2c_cmd_link_delete(cmd);
     return result;
 #else
@@ -61,7 +115,8 @@ bool MAX1704x::write(uint8_t regAddress, uint16_t value)
     i2c_master_write_byte(cmd, data[1], true);
     i2c_master_write_byte(cmd, data[0], true);
     i2c_master_stop(cmd);
-    bool result = (i2c_master_cmd_begin(I2C_NUM_0, cmd, I2C_WAIT_TICKS) == ESP_OK);
+    bool result =
+        (i2c_master_cmd_begin(I2C_NUM_0, cmd, I2C_WAIT_TICKS) == ESP_OK);
     i2c_cmd_link_delete(cmd);
     return result;
 #else
@@ -102,10 +157,14 @@ MAX1704x::MAX1704x(I2CBus bus, uint8_t i2c_address)
 
 void MAX1704x::getStatus(BatteryStatus &currentStatus)
 {
+    // initialize
     BatteryMonitorInterface::getStatus(currentStatus);
+    // Use witnesses if available
+    BatteryCharger::update(currentStatus);
+
     uint8_t currentSoC;
     uint8_t worstBatteryLevel = 100;
-    bool seemsToBeCharging = false;
+    bool seemsToBeCharging = currentStatus.isCharging.value_or(false);
     bool success = false;
     for (uint8_t i = 0; i < 10; i++)
     {
@@ -120,7 +179,7 @@ void MAX1704x::getStatus(BatteryStatus &currentStatus)
     }
     if (seemsToBeCharging)
     {
-        // The battery is charging, so SoC is unknown
+        // The battery is charging, so SoC is unreliable
         currentStatus.isCharging = true;
         currentStatus.usingExternalPower = true;
     }
@@ -159,7 +218,9 @@ int VoltageDividerMonitor::read()
 #endif
 
     // Get ADC reading
-    lastBatteryReading = internals::hal::gpio::getADCreading(_batteryREADPin, VOLTAGE_SAMPLES_COUNT);
+    lastBatteryReading = internals::hal::gpio::getADCreading(
+        _batteryREADPin,
+        VOLTAGE_SAMPLES_COUNT);
 
 #if !CD_CI
     // Disable circuit when required
@@ -172,13 +233,15 @@ int VoltageDividerMonitor::read()
 
 uint8_t VoltageDividerMonitor::readingToSoC(int reading)
 {
-    int batteryLevel = BatteryCalibrationService::call::getBatteryLevel(reading);
+    int batteryLevel =
+        BatteryCalibrationService::call::getBatteryLevel(reading);
     if (batteryLevel < 0)
     {
         // Battery calibration is *not* available
         // fallback to auto-calibration algorithm
         batteryLevel =
-            BatteryCalibrationService::call::getBatteryLevelAutoCalibrated(reading);
+            BatteryCalibrationService::call::getBatteryLevelAutoCalibrated(
+                reading);
     }
     return batteryLevel;
 }
@@ -189,11 +252,15 @@ VoltageDividerMonitor::VoltageDividerMonitor(
     uint32_t resistorToGND,
     uint32_t resistorToBattery)
 {
-    if ((resistorToGND >= resistorToBattery) && (resistorToGND > 0) && (resistorToBattery > 0))
+    if ((resistorToGND >= resistorToBattery) &&
+        (resistorToGND > 0) && (resistorToBattery > 0))
     {
         // Note: 4300 is the minimum expected charging voltage in millivolts
-        CHARGING_ADC_READING = (4300 * resistorToGND) / (resistorToGND + resistorToBattery); // in millivolts
-        CHARGING_ADC_READING = CHARGING_ADC_READING * 4095 / 3300;                           // in ADC steps
+        CHARGING_ADC_READING =
+            (4300 * resistorToGND) /
+            (resistorToGND + resistorToBattery); // in millivolts
+        CHARGING_ADC_READING =
+            CHARGING_ADC_READING * 4095 / 3300; // in ADC steps
     }
     else
         // Incoherent values: using the designed 200K and 110K resistors
@@ -212,9 +279,13 @@ VoltageDividerMonitor::VoltageDividerMonitor(
 
 void VoltageDividerMonitor::getStatus(BatteryStatus &currentStatus)
 {
+    // Initialize
     BatteryMonitorInterface::getStatus(currentStatus);
+    // Use witnesses if available
+    BatteryCharger::update(currentStatus);
+
     uint8_t worstBatteryLevel = 100;
-    bool seemsToBeCharging = false;
+    bool seemsToBeCharging = currentStatus.isCharging.value_or(false);
     bool success = false;
     for (uint8_t i = 0; i < 10; i++)
     {
@@ -222,9 +293,11 @@ void VoltageDividerMonitor::getStatus(BatteryStatus &currentStatus)
         if (reading >= NO_BATTERY_ADC_READING)
         {
             success = true;
-            seemsToBeCharging = seemsToBeCharging || (reading >= CHARGING_ADC_READING);
+            seemsToBeCharging = seemsToBeCharging ||
+                                (reading >= CHARGING_ADC_READING);
             // Note: we do not call readingToSoC() when the battery is charging
-            // to keep the autocalibration algorithm from using the charging voltage as reference
+            // to keep the autocalibration algorithm
+            // from using the charging voltage as reference
             if (!seemsToBeCharging)
             {
                 uint8_t currentSoC = readingToSoC(reading);
@@ -236,7 +309,7 @@ void VoltageDividerMonitor::getStatus(BatteryStatus &currentStatus)
     }
     if (seemsToBeCharging)
     {
-        // The battery is charging, so SoC is unknown
+        // The battery is charging, so SoC is unreliable
         currentStatus.isBatteryPresent = true;
         currentStatus.isCharging = true;
         currentStatus.usingExternalPower = true;

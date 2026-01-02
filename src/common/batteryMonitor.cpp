@@ -107,6 +107,24 @@ void batteryMonitor::setPowerOffSoC(uint8_t percentage)
     }
 }
 
+void batteryMonitor::setExternalPowerWitness(InputGPIO sensePin)
+{
+    abortIfStarted();
+    BatteryCharger::setExternalPowerWitness(sensePin, false, false);
+}
+
+void batteryMonitor::setChargingWitness(
+    InputGPIO sensePin,
+    bool negativeLogic,
+    bool enableInternalPullResistor)
+{
+    abortIfStarted();
+    BatteryCharger::setChargingWitness(
+        sensePin,
+        negativeLogic,
+        enableInternalPullResistor);
+}
+
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 // Internals
