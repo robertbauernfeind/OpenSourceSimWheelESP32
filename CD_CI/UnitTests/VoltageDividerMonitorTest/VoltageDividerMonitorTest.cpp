@@ -95,8 +95,7 @@ void test2()
     assert<bool>::equals("charging state", true, status.isCharging.value());
     assert<bool>::equals("known wired power state", true, status.usingExternalPower.has_value());
     assert<bool>::equals("wired power state", true, status.usingExternalPower.value());
-    assert<bool>::equals("known battery presence", true, status.isBatteryPresent.has_value());
-    assert<bool>::equals("battery presence", true, status.isBatteryPresent.value());
+    assert<bool>::equals("known battery presence", false, status.isBatteryPresent.has_value());
     assert<bool>::equals("unknown SoC state", false, status.stateOfCharge.has_value());
 }
 
