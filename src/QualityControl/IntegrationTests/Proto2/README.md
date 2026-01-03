@@ -2,7 +2,8 @@
 
 ## Purpose and summary
 
-To test battery level (calibrated), deep sleep/wakeup and digital clutch paddles.
+To test battery level (calibrated), deep sleep/wakeup
+and digital clutch paddles.
 
 ## Hardware setup
 
@@ -21,7 +22,8 @@ For later reference (this differs from previous tests):
 - "RCCW" means rotary's counter-clockwise rotation.
 
 A powerboost module and a battery is needed.
-However, the test circuit does not require power from the battery (that is up to you).
+However, the test circuit does not require power from the battery
+(that is up to you).
 Wire `battery(+)` and `POWERBOOST_GND`, at least.
 
 ## Software setup (computer)
@@ -54,15 +56,18 @@ Wire `battery(+)` and `POWERBOOST_GND`, at least.
 ### Digital clutch paddle
 
 1. Open the joystick test app.
-2. At this point, the working mode of clutch paddles could be set to anything due to previous test. This is ok.
-3. Hit "Cycle CF" 4 times and test "CLUTCH1" and "CLUTCH2" each time, in no particular order.
+2. At this point, the working mode of clutch paddles
+   could be set to anything due to previous test. This is ok.
+3. Hit "Cycle CF" 4 times and test "CLUTCH1" and "CLUTCH2" each time,
+   in no particular order.
    In clutch mode, test "RCW" and "RCCW" for bite point calibration.
 4. Hit "Cycle CF" until analog axis mode is selected (check using "CLUTCH1").
 5. Wait for 30 seconds or so.
 6. Reset. Close the joystick test app. Wait for the device to connect again.
 7. Open the joystick test app again.
 8. "CLUTCH1" must be configured in axis mode. Check.
-9. Hit "Cycle CF" until "regular buttons" mode is selected (check using "CLUTCH1").
+9. Hit "Cycle CF" until "regular buttons" mode is selected
+   (check using "CLUTCH1").
 10. Wait for 30 seconds or so.
 11. Reset. Close the joystick test app. Wait for the device to connect again.
 12. "CLUTCH1" must be configured in "regular buttons" mode. Check.
@@ -77,7 +82,9 @@ Wire `battery(+)` and `POWERBOOST_GND`, at least.
 5. Wait for 5 to 30 minutes (depending on battery capacity).
    Whatever the battery level was, it must decrease at least 1%.
 6. Wire `Battery(+)` to `3V3` in the protoboard.
-7. The device may go to deep sleep.
-   Check if the device is disconnected at the control panel.
-   However, if this does not happen,
-   the battery level must show a very low percentage after a minute or so.
+   The result depends on the type of battery used during calibration
+   (there is some randomness here):
+   - If the battery was a *LiPo* type,
+     a relatively high charge status will be displayed.
+   - If the battery was *LiIon* type,
+     a relatively low charge status will be displayed.
