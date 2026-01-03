@@ -413,6 +413,13 @@ public:
     /// @brief True if there is wired power
     std::optional<bool> usingExternalPower{};
 
+    /**
+     * @brief Compare for equality
+     *
+     * @param other Another battery status
+     * @return true If equal
+     * @return false If non-equal
+     */
     constexpr bool operator==(const BatteryStatus &other) const noexcept
     {
         return (stateOfCharge == other.stateOfCharge) &&
@@ -421,6 +428,10 @@ public:
                (usingExternalPower == other.usingExternalPower);
     }
 
+    /**
+     * @brief Reset to unknown
+     *
+     */
     inline void reset() noexcept
     {
         stateOfCharge.reset();

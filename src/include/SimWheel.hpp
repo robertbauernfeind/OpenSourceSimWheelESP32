@@ -567,7 +567,7 @@ namespace hid
      * @param deviceManufacturer Name of the manufacturer of this device
      * @param enableAutoPowerOff True to shutdown when not connected within a certain time lapse.
      *                           Set to false if there is no battery or for testing.
-     * @param vendorID Factory VID. Set to zero to use a default product ID.
+     * @param vendorID Factory VID. Set to zero to use a default vendor ID.
      *                 Value 0xFFFF is reserved for testing.
      *                 Ignored in the USB implementation.
      * @param productID Factory PID. Set to zero to use a default product ID.
