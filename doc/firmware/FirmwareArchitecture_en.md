@@ -614,6 +614,49 @@ conditioning, constant current, and constant voltage.
 For those reasons, the firmware takes several readings from the battery monitor
 trying to figure out what the situation is.
 
+#### Battery status guess algorithm
+
+```mermaid
+flowchart TB
+  start[[Determine state of charge]]
+  success_q{Success?}
+  out_of_bounds_q{Is SoC out of bounds?}
+  no_battery(
+    battery_presence=no
+    charging=unknown
+    wire_presence=yes
+    SOC=unknown
+  )
+  charging(
+    battery_presence=unknown
+    charging=yes
+    wire_presence=yes
+    SOC=unknown
+  )
+  discharging(
+    battery_presence=yes
+    charging=no
+    wire_presence=unknown
+    SOC=as_determined
+  )
+
+  start --> success_q
+  success_q -->|no| no_battery
+  success_q -->|yes| out_of_bounds_q
+  out_of_bounds_q -->|yes| charging
+  out_of_bounds_q -->|no| discharging
+```
+
+[Render this diagram at mermaid.live](https://mermaid.live/view#pako:eNqVUk1PwkAQ_SubOWkCBOSzTdADeDDRmMhNSpqlOy2NsIv7EUTgv7vb0kJVYjy02XnzZt7svtlBJBiCD_FSbKIFlZo8vgScEKXteTodo0a5Sjk6QCMRMXGsBGezjGWiCJUK33eT_HR3cLAwOhRxOBeGM5d8UGQiRg52DXI4Z3IRzqm2GtsrFxJyjMK1RIU8wiEXeSKTTXkyNPyNiw3P0U0q8cTdosrhyfPonHftfkWDS0KVvqVa2fIfSixVf4mV9aVQcc-qTmUop0VVyApP2FGx9IvU67cnTyoGudSei_3Zi__M26n23837xc8Tt5j-EskJnr0G1GBlR6cpsxu3c0UB6AWuMADfHhnG1Cx1AAE_WCo1Wky2PAJfS4M1MGtmV3Cc0kTSVRW8Z6kWssCkMMkC_JgulY3WlL8KURZgRn3Ktz5bfluAnKEc2ck1-N2sBPwdfIDf6zY67X7H63tet9Ue9Fs12ILvdRvtXqvZHvTs53m9m0MNPjONZmPQtw0S6a7oBA9fU6krQA)
+
+Assumptions:
+
+- The battery charger could put voltage on the battery pads even
+  if there is no battery, so `battery_presence=unknown`.
+- If the battery is present and discharging,
+  `wire_presence=unknown` because the wire could be plugged in but
+  not charging the battery right now.
+
 ### BatteryCalibration
 
 Provides an estimation of the "state of charge"
