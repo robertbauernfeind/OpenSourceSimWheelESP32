@@ -51,7 +51,7 @@ extern "C" void ble_store_config_init(void);
 //------------------------------------------------------------------------------
 
 #define BLE_APPEARANCE_GAMEPAD 0x03C4
-// static constexpr const uint8_t PREFERRED_PHY = BLE_HCI_LE_PHY_2M_PREF_MASK;
+static constexpr const uint8_t PREFERRED_PHY = BLE_HCI_LE_PHY_2M_PREF_MASK;
 
 //------------------------------------------------------------------------------
 // ApiResult
@@ -319,12 +319,6 @@ void BLEDevice::init_gatt_server()
 {
     ApiResult rc;
 
-    // Configure preferred PHY
-    // DISABLED: does not work
-    // rc = ble_gap_set_prefered_default_le_phy(PREFERRED_PHY, PREFERRED_PHY);
-    // if (rc.code != BLE_HS_EDONE)
-    //     rc.log_if("ble_gap_set_prefered_default_le_phy() failed");
-
     // Initialize GAP and GATT services
     ble_svc_gap_init();
     ble_svc_gatt_init();
@@ -359,10 +353,18 @@ void BLEDevice::onSync()
 {
     if (!ready)
     {
+        // Infer address type
         ApiResult rc = ble_hs_id_infer_auto(0, &address_type);
         assert(rc);
-        ready = true;
         log_i("BLEDevice::onSync(): address type %hhu", address_type);
+
+        // Configure preferred PHY
+        rc = ble_gap_set_prefered_default_le_phy(PREFERRED_PHY, PREFERRED_PHY);
+        if (rc.code != BLE_HS_EDONE)
+            rc.log_if("ble_gap_set_prefered_default_le_phy() failed");
+
+        // Signal BLE controller ready
+        ready = true;
         ble_npl_time_delay(1); // Force context switch
     }
 }
