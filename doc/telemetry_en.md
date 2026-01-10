@@ -72,7 +72,7 @@ and a custom plugin which is hosted here:
 
 [https://github.com/afpineda/SimWheelESP32-SimHub-Plugin](https://github.com/afpineda/SimWheelESP32-SimHub-Plugin)
 
-### Display hardware using the I2C bus
+## Display hardware using the I2C bus
 
 Devices that use the primary I2C for input must not use this bus for display.
 Otherwise performance problems may occur.
@@ -86,6 +86,10 @@ call `inputs::initializeI2C()` first. The parameters are:
 - 1st: the `SDA` pin for the secondary bus.
 - 2nd: the `SCL` pin for the secondary bus.
 - 3rd: set to `I2CBus::SECONDARY`. This is mandatory.
+- 4th (**optional**): enables or disables the internal pull-up resistors.
+  Pass `true` (the default) to enable them.
+  Pass `false` to disable them.
+  In such a case, external pull-up resistors are mandatory.
 
 Both pins **must** support input, output and pull-up resistors.
 For example:
