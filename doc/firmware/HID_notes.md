@@ -17,7 +17,7 @@ Those identifiers are assigned to individual vendors through a license managed b
 ["The USB Implementers Forum"](https://www.usb.org/about), aka "USB-IF".
 That license is not open-source-friendly and the $6000 fee discourages any home-made project attempt.
 
-More information at [Open source Hardware Association](https://www.oshwa.org/faq/#usb-vendor-id).
+More information at [Open source Hardware Association](https://oshwa.org/resources/open-source-hardware-faq/).
 
 This project features an USB implementation using the existing PID (product identifier)
 and VID from your DevKit manufacturer, which you should not change.
