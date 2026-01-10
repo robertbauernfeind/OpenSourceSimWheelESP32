@@ -50,7 +50,7 @@ Most encoders use
 This is the case of KY-040 and bare bone rotary encoders.
 Others seems to use a different signal encoding.
 **This is the case of [ALPS RKJX](https://docs.rs-online.com/5b4c/0900766b8152c2e9.pdf) series of funky switches**.
-Such encoding is called "alterante encoding" in this project.
+Such encoding is called "alternate encoding" in this project.
 The firmware is ready to use both.
 
 ## Firmware customization
