@@ -201,13 +201,12 @@ A dotted arrow means a dynamic dependency through a service class.
 
 ### Core
 
-Each box represents a subsystem (not a class).
-
 ```mermaid
 classDiagram
-    class inputs {
-    }
+    class inputs
     class AnalogInput
+    class DigitalInput
+    class inputMap
     class inputHub {
       +onRawInput()
     }
@@ -216,6 +215,14 @@ classDiagram
     }
     class telemetry
     class pixels
+    <<subsystem>> inputs
+    <<subsystem>> inputHub
+    <<subsystem>> hid
+    <<subsystem>> telemetry
+    <<subsystem>> pixels
+    <<subsystem>> inputMap
+    <<abstract>> AnalogInput
+    <<abstract>> DigitalInput
     inputHub <-- inputs: input events
     inputs <-- DigitalInput: state of switches
     inputs <-- AnalogInput: axis position
@@ -225,7 +232,7 @@ classDiagram
     telemetry <-- hid: raw telemetry data
 ```
 
-[Render this diagram at mermaid.live](https://mermaid.live/view#pako:eNp1krtuAyEQRX9lROUo9g-gNJFcJEWauIu2GS_jXSRegiFry_K_h33YJnKyDcvl3OEOcBatVySkaA2mtNXYRbSNg_JNCmgXMic4z9qlXnp1aHz3PgIPjre8v3oAnr37xGECV09_FOq1quBIwUf-n2YyZInjqRaDPpJJs3IL8LLZLPnlPAJ9k-MaSxO01Z1mNNOeEhIjE_gDpEFz29MjX3UuAY-67O-TZu1dhX5guCcY40iwRZqDuGz3FBOsWm8tOrU0Op5E7ZEQom8pJVK_ss_tTmixyHkOChmhFIOl6ALfDuzORxwqefSJtbAULWpVHsN0GY3gvgCNkOVX0QGz4UY07lJQzOx3J9cKyTHTWkSfu17IA5pUZjmUirQ8pisS0H15bxfo8gNIDNOG)
+[Render this diagram at mermaid.live](https://mermaid.live/view#pako:eNqFU01v4jAQ_SvWnLpaikBASayo0mp7aA-97LHKZUiGYCm2I38sUMR_X-ej1DRU60syb94bv5lJTlDokoBDUaO1TwIrgzJXLJwOYUI13tkY-aWw1tVLi8fwk6iEw3qEdwVesRlhz37DTj3K2E-t_uC-E9_96MFzrNiJMiIbarRx37Md1STJmWMMNuJA9dBJllm_sUfrSD4-XvV4IxOM3soFS7fgL3dfJ__j4TKmLMONdQYLF1KjgV9lx3O_TDe7vx964_2T0V9SH532mY4U1-DMOnTE9JbZvXDFjsb8yBFneBBhuNoKJ7SKqKGZTwetHc5kgHojyssNGcvuCi0lqnLYYrvmWMNZY3RB1lJ55b2fY0cNEt7HrESHLBRjQ9GBfNnIJ9_gPoJbHUygMqIE7oynCUgyEtsQuq8uB7cL5Bx4eC1pi752OeTqHGQNqjet5YfSaF_tgG-xtiHyTShOw391oZAqyfzWXjngq64C8BMcgC_m6-l6sUwWs1m6SJbzZALHgC6naTjJPH1IV-lqeZ7Ae3fjbJqsV-d_Rpk-Qg)
 
 ### Hardware inputs
 
