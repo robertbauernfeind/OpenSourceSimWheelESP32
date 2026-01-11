@@ -7,9 +7,9 @@
 ## Build manual and electronics
 
 - [Overview](./overview_en.md)
+  - [Quick reference for supported hardware in this project](./hardware/SupportedHW_en.md)
 - [Required skills and tools](./skills_en.md)
 - [Input hardware suitable (or not) for a sim wheel/button box](./hardware/InputHW_en.md)
-  - [Quick reference for supported hardware in this project](./hardware/SupportedHW_en.md)
 - [Know your ESP32 DevKit board](./hardware/DevKits_en.md)
 - [Prepare the source code for compilation and uploading](./firmware/sourcesSetup_en.md)
 - [How to customize in order to build your own hardware and firmware setup](./hardware/subsystems/CustomizeHowto_en.md)

@@ -1,5 +1,8 @@
 # Supported hardware quick reference
 
+This is a summary of supported hardware.
+You will find details later.
+
 ## Supported DevKits
 
 Any DevKit based on the ESP32 architecture having BLE
