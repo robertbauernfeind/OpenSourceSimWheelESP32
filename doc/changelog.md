@@ -1,5 +1,13 @@
 # Change log (and release notes)
 
+## 7.8.1
+
+- Data rate increased to 2Mbps for the raw NimBLE implementation (2M PHY).
+- Better implementation and explanation of error messages on
+  boards not having USB-to-UART chip (most ESP32S3 boards).
+- Minor errata fixes and documentation updates.
+- Added a quick reference about supported hardware.
+
 ## 7.8.0
 
 - The *Battery Level Status* characteristic is now supported for all
