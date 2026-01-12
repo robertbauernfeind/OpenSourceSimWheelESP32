@@ -16,19 +16,29 @@ then reset your DevKit board to avoid missing any messages.
 > Otherwise you will not see any error messages.
 
 Other error messages are **not** displayed by default.
-In order to enable them, go to the *Board Manager*
+In order to enable them, go to the *Tools* menu
 and set "Core debug level" to "error".
 After that, upload the firmware again.
-These additional error messages are caused by the operating system or system libraries.
+These additional error messages are caused
+by the operating system or system libraries.
 Check the internet for a description.
 
 This article focuses on **firmware-defined** error messages.
 
-If you are using USB connectivity,
-but your DevKit board does not have a second USB serial port,
-you can temporarily switch to
+### ESP32S3 boards not having USB-to-UART chip
+
+Many ESP32S3 boards do not feature an USB-to-UART chip
+(typically there is a single USB header).
+To display *any* error message in these boards,
+configure "USB CDC on boot" to "Enabled" in Arduino IDE
+(*Tools* menu).
+
+This is **incompatible** with USB connectivity.
+if you are using USB connectivity, temporarily switch to
 ["dummy" connectivity](./hardware/subsystems/CustomizeHowto_en.md#connectivity)
 for troubleshooting purposes.
+
+Remember to upload the firmware again.
 
 ## Firmware-defined error messages
 

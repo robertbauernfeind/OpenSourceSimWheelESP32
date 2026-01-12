@@ -21,8 +21,7 @@
 
 #include <exception>
 #include "freertos/FreeRTOS.h"
-#include <HardwareSerial.h>
-#include "USBCDC.h"
+#include <Arduino.h> // For conditional compilation
 
 #endif
 
@@ -83,20 +82,28 @@ void firmware::run(void (*func)())
         // Initialize UARTs
         Serial0.end();
         Serial0.begin(115200);
-#ifdef USB_SERIAL_IS_DEFINED
+#if ARDUINO_USB_CDC_ON_BOOT && !ARDUINO_USB_MODE
         USBSerial.end();
         USBSerial.begin(115200);
+#endif
+#if ARDUINO_USB_CDC_ON_BOOT && ARDUINO_USB_MODE
+        HWCDCSerial.end();
+        HWCDCSerial.begin(115200);
 #endif
         for (;;)
         {
             Serial0.println("**CUSTOM FIRMWARE ERROR**");
             Serial0.println(e.what());
-#ifdef USB_SERIAL_IS_DEFINED
+#if ARDUINO_USB_CDC_ON_BOOT && !ARDUINO_USB_MODE
             USBSerial.println("**CUSTOM FIRMWARE ERROR**");
             USBSerial.println(e.what());
+#endif
+#if ARDUINO_USB_CDC_ON_BOOT && ARDUINO_USB_MODE
+            HWCDCSerial.println("**CUSTOM FIRMWARE ERROR**");
+            HWCDCSerial.println(e.what());
 #endif
             vTaskDelay(pdMS_TO_TICKS(2000));
         }
     }
-#endif
+#endif // CD_CI else
 }
