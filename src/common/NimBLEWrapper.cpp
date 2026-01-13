@@ -185,11 +185,15 @@ int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
         log_i("GAP event: repeat pairing");
         // Delete the old bond
         ble_gap_conn_desc conn_info;
-        assert(
-            ble_gap_conn_find(event->repeat_pairing.conn_handle, &conn_info) == 0 &&
-            "BLE: Unable to delete old bond");
-        ble_store_util_delete_peer(&conn_info.peer_id_addr);
-        return BLE_GAP_REPEAT_PAIRING_RETRY; // continue with the pairing protocol
+        if (ble_gap_conn_find(
+                event->repeat_pairing.conn_handle,
+                &conn_info) == 0)
+        {
+            log_i("Deleting old bond");
+            ble_store_util_delete_peer(&conn_info.peer_id_addr);
+        }
+        // continue with the pairing protocol
+        return BLE_GAP_REPEAT_PAIRING_RETRY;
     case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
         log_i("GAP event: new PHY: rx=%d, tx=%d",
               event->phy_updated.rx_phy,
