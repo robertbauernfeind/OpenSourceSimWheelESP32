@@ -43,6 +43,9 @@ There are three choices:
 
    - [AM Studio projects](https://amstudioprojects.com/steering-wheels/)
 
+   - [DIY Sim Studio](https://www.diysimstudio.com/).
+     They offer a few steering wheel designs **for free**.
+
    If you know other vendors, please, share your knowledge.
 
 3. **Design and build your own housing**
