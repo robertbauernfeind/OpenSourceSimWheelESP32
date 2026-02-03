@@ -104,12 +104,8 @@ Other notes:
 > The *Wemos S3 mini* does not feature an USB-TO-UART chip,
 > so those pins have no predetermined use.
 > You may customize the sketch to use them.
-> However, the firmware will configure those pins as *UART0* in the following
-> situations:
->
-> - There are firmware error messages.
-> - "Core debug level" is not set to "none" in Arduino IDE ("Tools" menu).
->
+> However, the firmware will configure those pins as *UART0* if
+> there are error messages.
 > These pins are marked as "unusable" in the wiring diagrams below,
 > but that is not true at all.
 
