@@ -35,134 +35,61 @@ Test one first, then the other.
 
 Output through USB serial port at 115200 bauds.
 
-## Procedure and expected output for the KY-040 rotary encoder
+## Procedure and expected output
 
 1. Reset. Ignore output from the operating system itself.
-2. Output must match:
+2. Output must show:
 
    ```text
    -- READY --
-   E (14) gpio: gpio_install_isr_service(502): GPIO isr service already installed
-   E (38) gpio: gpio_install_isr_service(502): GPIO isr service already installed
-   E (38) gpio: gpio_install_isr_service(502): GPIO isr service already installed
-   E (41) gpio: gpio_install_isr_service(502): GPIO isr service already installed
+   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
    -- GO --
    ```
 
-   You can ignore the `... GPIO isr service already installed` message.
+   You must ignore the `... GPIO isr service already installed` message.
    This is **expected** behavior.
 
-3. Rotate encoder clockwise (once). Output should be:
+3. Rotate the encoder clockwise (once). Output should be:
 
-   ```text
-   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
-   STATE : 0000000000000000000000000000000000000000000000000000000000100000
-   CHANGE: 0000000000000000000000000000000000000000000000000000000000100000
-   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
-   STATE : 0000000000000000000000000000000000000000000000000000000000000000
-   CHANGE: 0000000000000000000000000000000000000000000000000000000000100000
-   ```
+   - For the KY-040:
 
-4. Check the correct position of every bit.
-5. Rotate encoder counter-clockwise (once). Output should be:
+     ```text
+     STATE : 0000000000000000000000000000000000000000000000000000000000100000
+     STATE : 0000000000000000000000000000000000000000000000000000000000000000
+     ```
 
-   ```text
-   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
-   STATE : 0000000000000000000000000000000000000000000000000000000001000000
-   CHANGE: 0000000000000000000000000000000000000000000000000000000001000000
-   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
-   STATE : 0000000000000000000000000000000000000000000000000000000000000000
-   CHANGE: 0000000000000000000000000000000000000000000000000000000001000000
-   ```
+   - For the funky switch:
 
-6. Check the correct position of every bit. Note that output from (4) is not the same as output from (1).
-   There is a bit displacement to the left.
-7. Rotate encoder randomly many times both fast and slow.
-   Check there is output on every single detent.
-8. Rotate encoder randomly many times at slow pace.
-   Check that output is six and only six lines long with each detent.
-
-## Procedure and expected output for the ALPS rotary encoder
-
-1. Reset. Ignore output from the operating system itself.
-2. Output must match:
-
-   ```text
-   -- READY --
-   -- GO --
-   ```
-
-3. Rotate encoder clockwise (once). Output should be:
-
-   ```text
-   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
-   STATE : 0000000000000000000000000000000000000000000000000000000000000001
-   CHANGE: 0000000000000000000000000000000000000000000000000000000000000001
-   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
-   STATE : 0000000000000000000000000000000000000000000000000000000000000000
-   CHANGE: 0000000000000000000000000000000000000000000000000000000000000001
-   ```
+     ```text
+     STATE : 0000000000000000000000000000000000000000000000000000000000000001
+     STATE : 0000000000000000000000000000000000000000000000000000000000000000
+     ```
 
 4. Check the correct position of every bit.
-5. Rotate encoder counter-clockwise (once).
-   Output should be:
+5. Rotate the encoder counter-clockwise (once). Output should be:
 
-   ```text
-   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
-   STATE : 0000000000000000000000000000000000000000000000000000000000000010
-   CHANGE: 0000000000000000000000000000000000000000000000000000000000000010
-   MASK  : 1111111111111111111111111111111111111111111111111111111110011100
-   STATE : 0000000000000000000000000000000000000000000000000000000000000000
-   CHANGE: 0000000000000000000000000000000000000000000000000000000000000010
-   ```
+   - For the KY-040:
+
+     ```text
+     STATE : 0000000000000000000000000000000000000000000000000000000001000000
+     STATE : 0000000000000000000000000000000000000000000000000000000000000000
+     ```
+
+   - For the funky switch:
+
+     ```text
+     STATE : 0000000000000000000000000000000000000000000000000000000000000010
+     STATE : 0000000000000000000000000000000000000000000000000000000000000000
+     ```
 
 6. Check the correct position of every bit.
-   Note that output from (4) is not the same as output from (1).
+   Note that output from (5) is not the same as output from (3).
    There is a bit displacement to the left.
-7. Rotate encoder randomly many times both fast and slow.
+7. Clear the serial monitor screen (it makes things easier).
+8. Rotate the encoder clockwise many times both fast and slow.
    Check there is output on every single detent.
-8. Rotate encoder randomly many times at slow pace.
-   Check that output is six and only six lines long with each detent.
-
-## Pulse width testing (any rotary encoder)
-
-1. Type `2` in the serial monitor and hit `enter`.
-2. Output should be:
-
-    ```text
-    Pulse multiplier set to 2
-    ```
-
-3. Rotate clockwise or counter-clockwise (it doesn't matter).
-   Ignoring `...`, output should be:
-
-   ```text
-   MASK  : ...
-   STATE : ...
-   CHANGE: ...
-   Pulse delay
-   MASK  : ...
-   STATE : ...
-   CHANGE: ...
-   ```
-
-4. Type `3` in the serial monitor and hit `enter`.
-    Output should be:
-
-    ```text
-    Pulse multiplier set to 3
-    ```
-
-5. Rotate clockwise or counter-clockwise (it doesn't matter).
-   Ignoring `...`, output should be:
-
-   ```text
-   MASK  : ...
-   STATE : ...
-   CHANGE: ...
-   Pulse delay
-   Pulse delay
-   MASK  : ...
-   STATE : ...
-   CHANGE: ...
-   ```
+   Check that all the line pairs are equal.
+9. Clear the serial monitor screen (it makes things easier).
+10. Rotate the encoder counter-clockwise many times both fast and slow.
+    Check there is output on every single detent.
+    Check that all the line pairs are equal.

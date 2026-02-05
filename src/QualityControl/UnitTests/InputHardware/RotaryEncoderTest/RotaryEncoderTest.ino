@@ -32,14 +32,8 @@ void notifyInputEvent(uint64_t state)
 {
     uint64_t changes = globalState ^ state;
     globalState = state;
-    Serial.print("MASK  : ");
-    debugPrintBool(mask);
-    Serial.println("");
     Serial.print("STATE : ");
     debugPrintBool(state);
-    Serial.println("");
-    Serial.print("CHANGE: ");
-    debugPrintBool(changes);
     Serial.println("");
 }
 
@@ -54,10 +48,17 @@ void setup()
     Serial.begin(115200);
     Serial.println("-- READY --");
 
-    rot1 = new RotaryEncoderInput(TEST_ROTARY_CLK, TEST_ROTARY_DT, 5, 6, false);
-    rot2 = new RotaryEncoderInput(TEST_ROTARY_ALPS_A, TEST_ROTARY_ALPS_B, 0, 1, true);
+    rot1 = new RotaryEncoderInput(
+        TEST_ROTARY_CLK,
+        TEST_ROTARY_DT, 5, 6, false);
+    rot2 = new RotaryEncoderInput(
+        TEST_ROTARY_ALPS_A,
+        TEST_ROTARY_ALPS_B, 0, 1, true);
 
     mask = rot1->mask & rot2->mask;
+    Serial.print("MASK  : ");
+    debugPrintBool(mask);
+    Serial.println("");
     Serial.println("-- GO --");
 }
 
