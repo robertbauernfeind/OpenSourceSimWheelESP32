@@ -105,7 +105,7 @@ class RotaryEncoderInput : public DigitalInput
 private:
     InputGPIO clkPin, dtPin; // pins
     uint8_t code;            // State of the decoding algorithm
-    uint16_t sequence;       // Last sequence of states in "alternate encoding"
+    uint16_t sequence;       // Last sequence of states
     uint64_t cwButtonBitmap;
     uint64_t ccwButtonBitmap;
     BitQueue queue;
