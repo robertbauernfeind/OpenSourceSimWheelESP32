@@ -1,5 +1,12 @@
 # Change log (and release notes)
 
+## 7.8.2
+
+- Fixed a bug causing ALPS funky switches to report rotation in
+  the wrong direction (when using "alternate encoding").
+  This happened at random with a 1% probability,
+  so it went unnoticed.
+
 ## 7.8.1
 
 - Data rate increased to 2Mbps for the raw NimBLE implementation (2M PHY).
