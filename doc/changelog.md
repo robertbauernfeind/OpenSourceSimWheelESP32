@@ -6,6 +6,12 @@
   the wrong direction (when using "alternate encoding").
   This happened at random with a 1% probability,
   so it went unnoticed.
+- Fixed wrong handling of BLE_GAP_EVENT_REPEAT_PAIRING
+  in the raw BLE implementation.
+- The documentation for the "ready-to-deploy" design "Setup9" has
+  been updated.
+- Added *DIY Sim Studio* to the list of plan vendors.
+  They offer a few steering wheel designs for free.
 
 ## 7.8.1
 
