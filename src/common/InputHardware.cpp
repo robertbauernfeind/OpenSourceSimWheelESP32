@@ -68,6 +68,7 @@ uint64_t DigitalButton::read(uint64_t lastState)
 //-------------------------------------------------------------------
 
 // Note: IRAM_ATTR no longer needed
+
 void RotaryEncoderInput::isrh(void *instance)
 {
     static const uint8_t valid_code[] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
@@ -99,28 +100,19 @@ void RotaryEncoderInput::isrh(void *instance)
 }
 
 // ----------------------------------------------------------------------------
-// state = xyXY
-// where xy = previous input, XY = current input, x or X=CLK, y or Y=DT
-//
-// States and transitions (mermaid graph):
-// graph TD
-//  0011 --01--> 1101 --00--> 0100 --CCW--> 0000
-//  0000 --10--> 0010 --11--> 1011 --CCW--> 0011
-//  0011 --10--> 1110 --00--> 1000 --CW--> 0000
-//  0000 --01--> 0001 --11--> 0111 --CW--> 0011
-//
-// transition = aaaabbbb
-// where aaaa=previous state, bbbb=current state
-//
-// Valid transitions:
-// 00111101
-// 11010100 (CCW to 0000)
-// 00000010
-// 00101011 (CCW to 0011)
-// 00111110
-// 11101000 (CW to 0000)
-// 00000001
-// 00010111 (CW to 0011)
+
+/*
+  DECODING ALGORITHM:
+  This is a state machine.
+  Let be "xy" the combined input from ENCODER_A (CLK) and ENCODER_B (DT).
+  Each state is represented as four bits:
+  - "1100": initial and final state
+  - "0000": another initial and final state
+  - "0001": transient state to clockwise rotation
+  - "0010": transient state to counter-clockwise rotation
+  - "1101": transient state to counter-clockwise rotation
+  - "1110": transient state to clockwise rotation
+*/
 
 void RotaryEncoderInput::isrhAlternateEncoding(void *instance)
 {
@@ -133,44 +125,49 @@ void RotaryEncoderInput::isrhAlternateEncoding(void *instance)
     // taskEXIT_CRITICAL_FROM_ISR(lock);
 
     uint8_t reading = ((clk << 1) | dt);
-    uint8_t nextCode = ((rotary->code << 2) | reading) & 0b1111;
-    uint8_t transition = (rotary->code << 4) | nextCode;
-
-    if ((transition == 0b00111101) ||
-        (transition == 0b11010100) ||
-        (transition == 0b00000010) ||
-        (transition == 0b00101011) ||
-        (transition == 0b00111110) ||
-        (transition == 0b11101000) ||
-        (transition == 0b00000001) ||
-        (transition == 0b00010111))
+    uint8_t initial_state = (rotary->code & 0b1100);
+    if ((reading == 0b01) || (reading == 0b10))
     {
-        if (transition == 0b11010100)
+        rotary->code = initial_state | reading;
+        return;
+    }
+    else // ((reading == 0b00) || (reading == 0b11))
+    {
+        uint8_t transient_state = (rotary->code & 0b0011);
+        initial_state = initial_state >> 2;
+        if (initial_state == reading)
+            // bouncing (ignore)
+            return;
+        if (initial_state == 0b00)
         {
-            // Clockwise rotation event
-            rotary->code = 0;
-            rotary->queue.enqueue(true);
+            if (transient_state == 0b01)
+            {
+                // Clockwise
+                rotary->queue.enqueue(true);
+                rotary->code = 0b1100;
+            }
+            else if (transient_state == 0b10)
+            {
+                // Counter-clockwise
+                rotary->queue.enqueue(false);
+                rotary->code = 0b1100;
+            }
         }
-        else if (transition == 0b00101011)
+        else // (initial_state==0b11)
         {
-            // Clockwise rotation event
-            rotary->code = 0b11;
-            rotary->queue.enqueue(true);
+            if (transient_state == 0b01)
+            {
+                // Counter-clockwise
+                rotary->queue.enqueue(false);
+                rotary->code = 0b0000;
+            }
+            else if (transient_state == 0b10)
+            {
+                // Clockwise
+                rotary->queue.enqueue(true);
+                rotary->code = 0b0000;
+            }
         }
-        else if (transition == 0b11101000)
-        {
-            // Counter-clockwise rotation event
-            rotary->code = 0;
-            rotary->queue.enqueue(false);
-        }
-        else if (transition == 0b00010111)
-        {
-            // Counter-clockwise rotation event
-            rotary->code = 0b11;
-            rotary->queue.enqueue(false);
-        }
-        else
-            rotary->code = nextCode;
     }
 }
 
@@ -200,9 +197,21 @@ RotaryEncoderInput::RotaryEncoderInput(
     // Initialize decoding state machine
     if (useAlternateEncoding)
     {
-        code = 0b11;
-        isrhAlternateEncoding(this);
-        isrhAlternateEncoding(this);
+        // Determine the initial state in alternate encoding
+        uint8_t retries = 0;
+        do
+        {
+            // Loop until a non-transient state is detected
+            // (code==0b0000) or (code==0b1100)
+            int clk = GPIO_GET_LEVEL(clkPin);
+            int dt = GPIO_GET_LEVEL(dtPin);
+            code = ((clk << 1) | dt) << 2;
+            retries++;
+        } while ((code != 0b0000) && (code != 0b1100) && (retries < 10));
+        if (retries >= 10)
+            // The rotary encoder is stuck in a transient state.
+            // The first rotation may produce a wrong event.
+            code = 0b0000;
     }
     else
     {
@@ -214,8 +223,10 @@ RotaryEncoderInput::RotaryEncoderInput(
     // Enable IRQ for dtPin
     if (useAlternateEncoding)
     {
-        internals::hal::gpio::enableISR(dtPin, isrhAlternateEncoding, (void *)this);
-        internals::hal::gpio::enableISR(clkPin, isrhAlternateEncoding, (void *)this);
+        internals::hal::gpio::enableISR(
+            dtPin, isrhAlternateEncoding, (void *)this);
+        internals::hal::gpio::enableISR(
+            clkPin, isrhAlternateEncoding, (void *)this);
     }
     else
     {
