@@ -128,7 +128,7 @@ std::string DEVICE_MANUFACTURER = "Me";
 // [ES] Asigne true si su dispositivo está alimentado por una batería
 
 #define ENABLE_BATTERY true
-//#define ENABLE_BATTERY false
+// #define ENABLE_BATTERY false
 
 // [EN] Assign true if you want to shutdown before the battery depletes
 // [ES] Asigne true si desea apagar el dispositivo antes de que
@@ -173,6 +173,10 @@ void simWheelSetup()
         PixelDriver::WS2812,
         PixelFormat::AUTO,
         127);
+#endif
+
+#if (LED_STRIP1_COUNT > 0) || (LED_STRIP2_COUNT > 0)
+    ui::addPixelControlNotifications();
 #endif
 
     // Configure rotary encoders
