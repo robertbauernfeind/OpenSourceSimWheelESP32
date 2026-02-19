@@ -181,6 +181,9 @@ function Push-AuxiliaryFiles {
         if ($original.Equals("hid_BLE.cpp")) {
             $uses_hid_ble = $true
         }
+        if ($original.Equals("hid_USB_BLE.cpp")) {
+            $uses_hid_ble = $true
+        }
         if ($original.Equals("hid_NimBLE.cpp")) {
             $uses_hid_nimble = $true
         }

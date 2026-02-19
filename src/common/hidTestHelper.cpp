@@ -346,18 +346,14 @@ void loop()
     if (!powerSim)
     {
         // Simulate power off
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
         debugPrintf("(Reset required)\n");
-#endif
         for (;;)
             ;
     }
 
     if (!internals::hid::isConnected())
     {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
         debugPrintf("(Waiting for connection)\n");
-#endif
     }
     else
     {

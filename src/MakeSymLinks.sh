@@ -51,6 +51,9 @@ get_required_links() {
             if [ "$line" = "hid_BLE.cpp" ]; then
                 uses_hid_ble=true
             fi
+            if [ "$line" = "hid_USB_BLE.cpp" ]; then
+                uses_hid_ble=true
+            fi
             if [ "$line" = "hid_NimBLE.cpp" ]; then
                 uses_hid_nimble=true
             fi
