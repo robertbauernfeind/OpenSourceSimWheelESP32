@@ -210,7 +210,33 @@
 // ------------------------------------------------------------
 
 #if !CD_CI
-#include <HardwareSerial.h>
+#include <Arduino.h> // For conditional compilation
+#include <stdarg.h>  // For variadic functions
+
+inline void debugPrintBegin()
+{
+    Serial0.begin(115200);
+#if ARDUINO_USB_CDC_ON_BOOT && !ARDUINO_USB_MODE
+    USBSerial.begin(115200);
+#endif
+#if ARDUINO_USB_CDC_ON_BOOT && ARDUINO_USB_MODE
+    HWCDCSerial.begin(115200);
+#endif
+}
+
+inline void debugPrintf(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    Serial0.vprintf(format, args);
+#if ARDUINO_USB_CDC_ON_BOOT && !ARDUINO_USB_MODE
+    USBSerial.vprintf(format, args);
+#endif
+#if ARDUINO_USB_CDC_ON_BOOT && ARDUINO_USB_MODE
+    HWCDCSerial.vprintf(format, args);
+#endif
+    va_end(args);
+}
 
 inline void debugPrintBool(uint64_t state, uint8_t bitCount = 0)
 {
@@ -220,12 +246,12 @@ inline void debugPrintBool(uint64_t state, uint8_t bitCount = 0)
     for (int i = (bitCount - 1); i >= 0; i--)
     {
         if ((1ULL << i) & state)
-            Serial.print("1");
+            debugPrintf("1");
         else
-            Serial.print("0");
+            debugPrintf("0");
     }
 }
-#endif
+#endif // !CD_CI
 
 void setDebugInputNumbers(ButtonMatrix &instance)
 {

@@ -16,7 +16,7 @@
 #include "SimWheelInternals.hpp"
 #include "InternalServices.hpp"
 #include "HID_definitions.hpp"
-#include <HardwareSerial.h>
+#include "Testing.hpp"
 
 //------------------------------------------------------------------
 // Globals
@@ -46,32 +46,24 @@ class InputServiceMock : public InputService
 public:
     virtual void recalibrateAxes() override
     {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-        Serial.println("CMD: recalibrate axes");
-#endif
+        debugPrintf("CMD: recalibrate axes\n");
     }
 
     virtual void reverseLeftAxis() override
     {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-        Serial.println("CMD: reverse left axis");
-#endif
+        debugPrintf("CMD: reverse left axis\n");
     }
 
     virtual void reverseRightAxis() override
     {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-        Serial.println("CMD: reverse right axis");
-#endif
+        debugPrintf("CMD: reverse right axis\n");
     }
 
     virtual void setRotaryPulseWidthMultiplier(
         PulseWidthMultiplier multiplier,
         bool save) override
     {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-        Serial.printf("CMD: pulse width x%hhu\n", (uint8_t)multiplier);
-#endif
+        debugPrintf("CMD: pulse width x%hhu\n", (uint8_t)multiplier);
     }
 
 } inputMock;
@@ -82,11 +74,8 @@ class BattCalMock : public BatteryCalibrationService
 {
     virtual void restartAutoCalibration() override
     {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-        Serial.println("CMD: recalibrate battery");
-#endif
+        debugPrintf("CMD: recalibrate battery\n");
     }
-
 } battCalMock;
 
 //------------------------------------------------------------------
@@ -96,9 +85,7 @@ class PowerMock : public PowerService
 public:
     virtual void shutdown()
     {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-        Serial.println("*** POWER OFF ***");
-#endif
+        debugPrintf("*** POWER OFF ***\n");
         powerSim = false;
     }
 
@@ -112,16 +99,12 @@ public:
 
 void onConnectedCallback()
 {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-    Serial.println("*** CONNECTED ***");
-#endif
+    debugPrintf("*** CONNECTED ***\n");
 }
 
 void onDisconnectedCallback()
 {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-    Serial.println("*** DISCOVERING ***");
-#endif
+    debugPrintf("*** DISCOVERING ***\n");
 }
 
 //------------------------------------------------------------------
@@ -133,28 +116,22 @@ void internals::pixels::set(
     uint8_t green,
     uint8_t blue)
 {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-    Serial.printf("pixels::set(%hhu,%hhu,%hhu,%hhu,%hhu)\n",
-                  (uint8_t)group,
-                  pixelIndex,
-                  red,
-                  green,
-                  blue);
-#endif
+    debugPrintf("pixels::set(%hhu,%hhu,%hhu,%hhu,%hhu)\n",
+                (uint8_t)group,
+                pixelIndex,
+                red,
+                green,
+                blue);
 }
 
 void internals::pixels::reset()
 {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-    Serial.println("pixels::reset()");
-#endif
+    debugPrintf("pixels::reset()\n");
 }
 
 void internals::pixels::show()
 {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-    Serial.println("pixels::show()");
-#endif
+    debugPrintf("pixels::show()\n");
 }
 
 uint8_t internals::pixels::getCount(PixelGroup group)
@@ -170,89 +147,96 @@ void internals::pixels::getReady() {}
 
 void checkAndPrintTelemetryData()
 {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
     if (telemetry::data.frameID != lastFrameID)
     {
         lastFrameID = telemetry::data.frameID;
-        Serial.printf("powertrain: %c %u %u %u %u %u %u %u\n",
-                      telemetry::data.powertrain.gear,
-                      telemetry::data.powertrain.rpm,
-                      telemetry::data.powertrain.rpmPercent,
-                      telemetry::data.powertrain.shiftLight1,
-                      telemetry::data.powertrain.shiftLight2,
-                      telemetry::data.powertrain.revLimiter,
-                      telemetry::data.powertrain.engineStarted,
-                      telemetry::data.powertrain.speed);
-        Serial.printf("ecu: %u %u %u %u %u %u %u %u %u\n",
-                      telemetry::data.ecu.absEngaged,
-                      telemetry::data.ecu.tcEngaged,
-                      telemetry::data.ecu.drsEngaged,
-                      telemetry::data.ecu.pitLimiter,
-                      telemetry::data.ecu.lowFuelAlert,
-                      telemetry::data.ecu.absLevel,
-                      telemetry::data.ecu.tcLevel,
-                      telemetry::data.ecu.tcCut,
-                      telemetry::data.ecu.brakeBias);
-        Serial.printf("race control: %u %u %u %u %u %u %u %u %u\n",
-                      telemetry::data.raceControl.blackFlag,
-                      telemetry::data.raceControl.blueFlag,
-                      telemetry::data.raceControl.checkeredFlag,
-                      telemetry::data.raceControl.greenFlag,
-                      telemetry::data.raceControl.orangeFlag,
-                      telemetry::data.raceControl.whiteFlag,
-                      telemetry::data.raceControl.yellowFlag,
-                      telemetry::data.raceControl.remainingLaps,
-                      telemetry::data.raceControl.remainingMinutes);
-        Serial.printf("gauges: %u %.2f %u %.2f %u %u %u\n",
-                      telemetry::data.gauges.relativeTurboPressure,
-                      telemetry::data.gauges.absoluteTurboPressure,
-                      telemetry::data.gauges.waterTemperature,
-                      telemetry::data.gauges.oilPressure,
-                      telemetry::data.gauges.oilTemperature,
-                      telemetry::data.gauges.relativeRemainingFuel,
-                      telemetry::data.gauges.absoluteRemainingFuel);
+        debugPrintf("powertrain: %c %u %u %u %u %u %u %u\n",
+                    telemetry::data.powertrain.gear,
+                    telemetry::data.powertrain.rpm,
+                    telemetry::data.powertrain.rpmPercent,
+                    telemetry::data.powertrain.shiftLight1,
+                    telemetry::data.powertrain.shiftLight2,
+                    telemetry::data.powertrain.revLimiter,
+                    telemetry::data.powertrain.engineStarted,
+                    telemetry::data.powertrain.speed);
+        debugPrintf("ecu: %u %u %u %u %u %u %u %u %u\n",
+                    telemetry::data.ecu.absEngaged,
+                    telemetry::data.ecu.tcEngaged,
+                    telemetry::data.ecu.drsEngaged,
+                    telemetry::data.ecu.pitLimiter,
+                    telemetry::data.ecu.lowFuelAlert,
+                    telemetry::data.ecu.absLevel,
+                    telemetry::data.ecu.tcLevel,
+                    telemetry::data.ecu.tcCut,
+                    telemetry::data.ecu.brakeBias);
+        debugPrintf("race control: %u %u %u %u %u %u %u %u %u\n",
+                    telemetry::data.raceControl.blackFlag,
+                    telemetry::data.raceControl.blueFlag,
+                    telemetry::data.raceControl.checkeredFlag,
+                    telemetry::data.raceControl.greenFlag,
+                    telemetry::data.raceControl.orangeFlag,
+                    telemetry::data.raceControl.whiteFlag,
+                    telemetry::data.raceControl.yellowFlag,
+                    telemetry::data.raceControl.remainingLaps,
+                    telemetry::data.raceControl.remainingMinutes);
+        debugPrintf("gauges: %u %.2f %u %.2f %u %u %u\n",
+                    telemetry::data.gauges.relativeTurboPressure,
+                    telemetry::data.gauges.absoluteTurboPressure,
+                    telemetry::data.gauges.waterTemperature,
+                    telemetry::data.gauges.oilPressure,
+                    telemetry::data.gauges.oilTemperature,
+                    telemetry::data.gauges.relativeRemainingFuel,
+                    telemetry::data.gauges.absoluteRemainingFuel);
     }
-#endif
 }
 
 void printBatteryStatus()
 {
-    Serial.println("Current battery status:");
-    Serial.print(" State of charge: ");
+    debugPrintf("Current battery status:\n");
+    debugPrintf(" State of charge: ");
     if (!battStatus.stateOfCharge.has_value())
-        Serial.println("unknown");
+        debugPrintf("unknown\n");
     else
-        Serial.println("yes");
+        debugPrintf("yes\n");
 
-    Serial.print(" Wired power: ");
+    debugPrintf(" Wired power: ");
     if (!battStatus.usingExternalPower.has_value())
-        Serial.println("unknown");
+        debugPrintf("unknown");
     else if (battStatus.usingExternalPower.value())
-        Serial.println("yes");
+        debugPrintf("yes\n");
     else
-        Serial.println("no");
+        debugPrintf("no\n");
 
-    Serial.print(" Charging: ");
+    debugPrintf(" Charging: ");
     if (!battStatus.isCharging.has_value())
-        Serial.println("unknown");
+        debugPrintf("unknown\n");
     else if (battStatus.isCharging.value())
-        Serial.println("yes");
+        debugPrintf("yes\n");
     else
-        Serial.println("no");
+        debugPrintf("no\n");
 
-    Serial.print(" Battery presence: ");
+    debugPrintf(" Battery presence: ");
     if (!battStatus.isBatteryPresent.has_value())
-        Serial.println("unknown");
+        debugPrintf("unknown\n");
     else if (battStatus.isBatteryPresent.value())
-        Serial.println("yes");
+        debugPrintf("yes\n");
     else
-        Serial.println("no");
+        debugPrintf("no\n");
 } // printBatteryStatus()
 
 void executeSerialCommands()
 {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-    int chr = Serial.read();
+    int chr = 0;
+#if ARDUINO_USB_CDC_ON_BOOT && !ARDUINO_USB_MODE
+    chr = USBSerial.read();
+#endif
+#if ARDUINO_USB_CDC_ON_BOOT && ARDUINO_USB_MODE
+    if (chr == 0)
+        chr = HWCDCSerial.read();
+#endif
+    if (chr == 0)
+        chr = Serial0.read();
+
     if (chr == 'l' || chr == 'L')
     {
         if (battStatus.stateOfCharge.has_value())
@@ -299,11 +283,11 @@ void executeSerialCommands()
         else
             battStatus.isBatteryPresent = true;
         printBatteryStatus();
-    } else if (chr == '?')
+    }
+    else if (chr == '?')
     {
         printBatteryStatus();
     }
-#endif
 } // executeSerialCommands()
 
 //------------------------------------------------------------------
@@ -312,10 +296,8 @@ void executeSerialCommands()
 
 void setup()
 {
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-    Serial.begin(115200);
-    Serial.println("--START--");
-#endif
+    debugPrintBegin();
+    debugPrintf("--START--\n");
     battStatus.stateOfCharge = 99;
     battStatus.isBatteryPresent = true;
     DeviceCapabilities::setFlag(DeviceCapability::CLUTCH_ANALOG);
@@ -343,16 +325,14 @@ void setup()
     internals::hid::common::getReady();
     OnStart::notify();
 
-#if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
     if (!internals::hid::supportsCustomHardwareID())
-        Serial.println("Actual VID / PID depends on DevKit (not BLE)");
+        debugPrintf("Actual VID / PID depends on DevKit (not BLE)\n");
     else
-        Serial.printf(
+        debugPrintf(
             "Actual VID / PID: %04x / %04x\n",
             BLE_VENDOR_ID,
             BLE_PRODUCT_ID);
-    Serial.println("--GO--");
-#endif
+    debugPrintf("--GO--\n");
 }
 
 //------------------------------------------------------------------
@@ -367,7 +347,7 @@ void loop()
     {
         // Simulate power off
 #if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-        Serial.println("(Reset required)");
+        debugPrintf("(Reset required)\n");
 #endif
         for (;;)
             ;
@@ -376,7 +356,7 @@ void loop()
     if (!internals::hid::isConnected())
     {
 #if (ARDUINO_USB_MODE == 1) || defined(CONFIG_IDF_TARGET_ESP32)
-        Serial.println("(Waiting for connection)");
+        debugPrintf("(Waiting for connection)\n");
 #endif
     }
     else
