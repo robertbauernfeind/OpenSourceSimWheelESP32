@@ -226,15 +226,15 @@ void printBatteryStatus()
 
 void executeSerialCommands()
 {
-    int chr = 0;
+    int chr = -1;
 #if ARDUINO_USB_CDC_ON_BOOT && !ARDUINO_USB_MODE
     chr = USBSerial.read();
 #endif
 #if ARDUINO_USB_CDC_ON_BOOT && ARDUINO_USB_MODE
-    if (chr == 0)
+    if (chr < 0)
         chr = HWCDCSerial.read();
 #endif
-    if (chr == 0)
+    if (chr < 0)
         chr = Serial0.read();
 
     if (chr == 'l' || chr == 'L')
