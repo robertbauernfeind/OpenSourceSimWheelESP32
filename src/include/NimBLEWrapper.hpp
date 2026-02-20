@@ -175,9 +175,15 @@ struct BLEAdvertising
     /// @brief Start advertising
     static void start();
 
+    /// @brief Stop advertising
+    static void stop() noexcept;
+
     /// @brief Check if a connection is established
     /// @return True if there is a connection
     static bool connected() noexcept { return _connected; }
+
+    /// @brief Terminate connection (if any)
+    static void disconnect() noexcept;
 
 private:
     /// @brief Advertising parameters required by the stack
@@ -193,6 +199,9 @@ private:
 
     /// @brief Current connection status
     inline static bool _connected = false;
+
+    /// @brief Current connection handle
+    inline static int16_t _conn_handle = BLE_HS_CONN_HANDLE_NONE;
 
     /// @brief Callback function for GAP events
     /// @param event Event

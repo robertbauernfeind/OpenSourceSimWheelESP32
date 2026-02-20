@@ -112,6 +112,27 @@ void BLEAdvertising::start()
     }
 };
 
+void BLEAdvertising::stop() noexcept
+{
+    ApiResult rc = ble_gap_adv_stop();
+    if (rc != BLE_HS_EALREADY)
+        rc.log_if("ble_gap_adv_stop() failed");
+}
+
+void BLEAdvertising::disconnect() noexcept
+{
+    if (_connected)
+    {
+        ApiResult rc = ble_gap_terminate(
+            _conn_handle,
+            BLE_ERR_REM_USER_CONN_TERM);
+        // if ((rc != BLE_HS_ENOTCONN) && (rc != BLE_HS_EALREADY))
+        rc.log_if("ble_gap_terminate() failed");
+    }
+    else
+        log_i("BLEAdvertising::disconnect(): not connected anyway");
+}
+
 int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
 {
     // Note: most events are handled just for debugging purposes
@@ -130,6 +151,7 @@ int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_DISCONNECT:
         log_i("GAP event: disconnection");
         _connected = false;
+        _conn_handle = BLE_HS_CONN_HANDLE_NONE;
         if (onConnectionStatus)
             onConnectionStatus(false);
         break;
@@ -175,10 +197,11 @@ int BLEAdvertising::ble_gap_event_fn(ble_gap_event *event, void *arg)
                   event->link_estab.status);
         else
         {
-            log_i("GAP event: link established");
+            _conn_handle = event->link_estab.conn_handle;
+            _connected = true;
+            log_i("GAP event: link established, handle %u", _conn_handle);
             if (onConnectionStatus)
                 onConnectionStatus(true);
-            _connected = true;
         }
         break;
     case BLE_GAP_EVENT_REPEAT_PAIRING:

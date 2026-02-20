@@ -18,12 +18,26 @@
 #include "SimWheelInternals.hpp"
 #include "InternalServices.hpp"
 #include "HID_definitions.hpp"
-#include "esp_mac.h" // For esp_efuse_mac_get_default()
-#include <cstring>
-// #include <Arduino.h> // For debugging
+#include "esp_mac.h"       // For esp_efuse_mac_get_default()
+#include "esp32-hal-log.h" // Logging
+#include <cstring>         // For memcpy
 
 // ----------------------------------------------------------------------------
-// USB classes
+// Globals
+// ----------------------------------------------------------------------------
+
+static uint8_t inputReportData[GAMEPAD_REPORT_SIZE] = {0};
+static bool notifyConfigChanges = false;
+USBHID usbHidDevice;
+
+// We create a new USB instance as the default stack size is not enough
+ESPUSB USB_instance(4096);
+#define USB USB_instance
+
+void startBLEAdvertising(); // Forward declaration
+
+// ----------------------------------------------------------------------------
+// USB
 // ----------------------------------------------------------------------------
 
 class SimWheelHIDImpl : public USBHIDDevice
@@ -47,9 +61,6 @@ class SimWheelHIDImpl : public USBHIDDevice
         const uint8_t *buffer,
         uint16_t len) override
     {
-        if (BLEAdvertising::connected())
-            // BLE takes precedence
-            return;
         // Note: for unknown reasons, output reports trigger this callback
         // instead of _onOutput()
         if (report_id >= RID_OUTPUT_POWERTRAIN)
@@ -65,47 +76,72 @@ class SimWheelHIDImpl : public USBHIDDevice
         const uint8_t *buffer,
         uint16_t len) override
     {
-        if (BLEAdvertising::connected())
-            // BLE takes precedence
-            return;
         // Note: never gets called unless report_id is zero. Reason unknown.
         internals::hid::common::onOutput(report_id, buffer, len);
     }
-};
+} simWheelHID;
 
-// ----------------------------------------------------------------------------
-// Globals
-// ----------------------------------------------------------------------------
-
-static uint8_t inputReportData[GAMEPAD_REPORT_SIZE] = {0};
-static bool notifyConfigChanges = false;
-USBHID usbHidDevice;
-SimWheelHIDImpl simWheelHID;
+static void usbEventCallback(
+    void *arg,
+    esp_event_base_t event_base,
+    int32_t event_id,
+    void *event_data)
+{
+    if (event_base == ARDUINO_USB_EVENTS)
+    {
+        switch (event_id)
+        {
+        case ARDUINO_USB_STARTED_EVENT:
+            log_i("USB PLUGGED");
+            BLEAdvertising::stop();
+            // This will trigger onBleConnectionStatus(false)
+            BLEAdvertising::disconnect();
+            break;
+        case ARDUINO_USB_SUSPEND_EVENT:
+            // DEVELOPER NOTE:
+            // This should be "case ARDUINO_USB_STOPPED_EVENT:"
+            // but I guess there is a bug in Arduino-ESP32
+            log_i("USB UNPLUGGED");
+            startBLEAdvertising();
+            break;
+        default:
+            log_d("USB EVENT %u %u\n", event_base, event_id);
+            break;
+        }
+    }
+    else
+        log_d("HID EVENT %u %u\n", event_base, event_id);
+}
 
 // ----------------------------------------------------------------------------
 // BLE Server callbacks and advertising
 // ----------------------------------------------------------------------------
 
-void onConnectionStatus(bool connected)
+void onBleConnectionStatus(bool connected)
 {
     if (connected)
-        usbHidDevice.end();
+        OnConnected::notify();
     else
     {
-        usbHidDevice.begin();
-        BLEAdvertising::start();
+        OnDisconnected::notify();
+        if (!usbHidDevice.ready())
+            startBLEAdvertising();
     }
-}
-
-void startBLEAdvertising()
-{
-    onConnectionStatus(false);
 }
 
 uint16_t onInputReport(uint8_t reportId, uint8_t *data, uint16_t size)
 {
     memcpy(data, inputReportData, size);
     return size;
+}
+
+void startBLEAdvertising()
+{
+    if (!BLEAdvertising::connected())
+    {
+        OnDisconnected::notify();
+        BLEAdvertising::start();
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -122,7 +158,7 @@ void internals::hid::begin(
     if (!BLEDevice::initialized())
     {
         // BLE initialization
-        BLEAdvertising::onConnectionStatus = onConnectionStatus;
+        BLEAdvertising::onConnectionStatus = onBleConnectionStatus;
         BLEHIDService::onReadInputReport = onInputReport;
         BLEHIDService::onGetFeatureReport =
             internals::hid::common::onGetFeature;
@@ -151,12 +187,14 @@ void internals::hid::begin(
             USB.serialNumber(serialAsStr);
         }
         usbHidDevice.addDevice(&simWheelHID, sizeof(hid_descriptor));
+        USB.onEvent(usbEventCallback);
+        usbHidDevice.onEvent(usbEventCallback);
+        usbHidDevice.begin();
         USB.begin();
     }
 
     // Final touches
     startBLEAdvertising();
-    OnConnected::notify();
     internals::hid::reset();
 }
 
