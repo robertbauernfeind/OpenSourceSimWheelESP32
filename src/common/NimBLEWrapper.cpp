@@ -16,7 +16,7 @@
 // Conditional compilation
 //------------------------------------------------------------------------------
 
-// #define NDEBUG // Comment out while debugging
+#define NDEBUG // Comment out while debugging
 
 #include "NimBLEWrapper.hpp"
 
