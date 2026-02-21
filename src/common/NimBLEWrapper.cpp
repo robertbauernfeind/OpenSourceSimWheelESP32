@@ -16,6 +16,8 @@
 // Conditional compilation
 //------------------------------------------------------------------------------
 
+// #define NDEBUG // Comment out while debugging
+
 #include "NimBLEWrapper.hpp"
 
 #if CONFIG_NIMBLE_ENABLED
@@ -23,8 +25,6 @@
 //------------------------------------------------------------------------------
 // Imports
 //------------------------------------------------------------------------------
-
-#define NDEBUG // Comment out while debugging
 
 #include <cstring>
 #include <algorithm>
