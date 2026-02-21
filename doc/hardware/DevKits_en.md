@@ -7,16 +7,21 @@ Expressif's "ESP32C3" boards are not recommended
 since they have a single CPU core.
 They work, but this project takes advantage of dual core architectures.
 
-Alternatively, you may use any "ESP32S3" board for
-a purely wired implementation, since those are *USB-capable*.
-"USB-capable" means your devkit is able to work as a fully-featured USB device.
+Alternatively, you may use any *USB-capable* board for
+a purely wired implementation, at least:
+
+- ESP32S2
+- ESP32S3
+- ESP32P4
+
+"USB-capable" means your devkit is able to work as a fully-featured USB device,
+usually named "USB on-the-go" or "USB-OTG".
 Note that most USB ports found in devkit boards are just serial port devices,
-not fully featured ones, so check a data sheet before purchasing.
-Right now, this project does not support both
-USB and BLE connectivity at the same time in the same device.
+not fully featured ones, so check the data sheet before purchasing.
 
 "Pure" ESP32 boards are widely available and 100% functional,
-however, they are a bit outdated and may drop support soon.
+however, they are a bit outdated and support will be dropped in 2031. See the
+[Expressif longevity commitment](https://www.espressif.com/en/products/longevity-commitment).
 My advice is to go with the latest boards.
 Some interesting DevKit boards for this project are:
 

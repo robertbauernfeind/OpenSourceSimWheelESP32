@@ -827,23 +827,7 @@ standard to provide connectivity.
 The device will appear as a
 [Gamepad](https://en.wikipedia.org/wiki/Gamepad) to the hosting computer.
 The *hid* namespace is in charge of that.
-However, this project provides several alternate implementations:
-
-- *hid_BLE.cpp*: BLE using the
-  [NimBLE API](https://mynewt.apache.org/latest/network/),
-  which is only available in ESP32-Arduino core version 3.3.0 or later,
-  except for "pure" ESP32 boards.
-
-- *hid_h2zero.cpp*: BLE using the
-  [NimBLE stack](https://mynewt.apache.org/latest/network/).
-  Requires an additional Arduino
-  [library](https://www.arduino.cc/reference/en/libraries/nimble-arduino/).
-  Available for all boards and all core versions.
-
-- *hid_USB.cpp*: wired USB implementation.
-
-- *hid_dummy.cpp*: dummy implementation with no actual behavior.
-  Provided to troubleshoot the custom firmware and for testing.
+However, this project provides several alternate implementations.
 
 ### Relevant BLE implementation details
 

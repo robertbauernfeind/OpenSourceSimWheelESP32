@@ -269,12 +269,13 @@ To choose a **connectivity** option:
   Replace the file name in this table with another from
   the same table.
 
-  | Connectivity | Stack   | Wrapper               | *Filename*     |
-  | ------------ | ------- | --------------------- | -------------- |
-  | BLE          | NimBLE  | none                  | hid_BLE.cpp    |
-  | BLE          | NimBLE  | h2zero/NimBLE-Arduino | hid_h2zero.cpp |
-  | USB          | TinyUSB | ESP32-Arduino core    | hid_USB.cpp    |
-  | Dummy        | none    | none                  | hid_dummy.cpp  |
+  | Connectivity | Stack            | Wrapper                 | *Filename*      |
+  | ------------ | ---------------- | ----------------------- | --------------- |
+  | BLE          | NimBLE/Bluedroid | none/ESP32-Arduino core | hid_BLE.cpp     |
+  | BLE          | NimBLE           | h2zero/NimBLE-Arduino   | hid_h2zero.cpp  |
+  | USB          | TinyUSB          | ESP32-Arduino           | hid_USB.cpp     |
+  | USB+BLE      | TinyUSB & NimBLE | core & none             | hid_USB_BLE.cpp |
+  | Dummy        | none             | none                    | hid_dummy.cpp   |
 
   Those file names are case-sensitive.
 

@@ -318,6 +318,24 @@ This project provides several (exclusive) connectivity choices:
   library in this case.
 
 - Universal Serial Bus (USB).
+  There is no sense in using a battery-operated design
+  if you have USB power available.
+  For this reason, automatic shutdown is not available
+  within this implementation.
+
+- Simultaneous BLE and USB connectivity
+  There are some pros and cons:
+
+  - For this to work, you have to configure **USB Mode** to
+    **USB-OTG (TinyUSB)** in Arduino IDE ("Tools" menu).
+    Otherwise, only BLE connectivity will work.
+  - USB connectivity takes precedence over BLE connectivity.
+    Switching from one to the other is automatic.
+  - When switching connectivity, the device will briefly disconnect.
+  - Your simulator may detect each connectivity option as a different device
+    despite having the same VID, PID and serial number.
+  - Custom VID/PID is not available.
+  - Automatic shutdown is available.
 
 - "Dummy" connectivity, available for troubleshooting.
   This option provides no connectivity at all.
@@ -332,12 +350,13 @@ In order to use any of them:
   Replace the file name in this table with another from
   the same table.
 
-  | Connectivity | Stack            | Wrapper                 | *Filename*     |
-  | ------------ | ---------------- | ----------------------- | -------------- |
-  | BLE          | NimBLE/Bluedroid | none/ESP32-Arduino core | hid_BLE.cpp    |
-  | BLE          | NimBLE           | h2zero/NimBLE-Arduino   | hid_h2zero.cpp |
-  | USB          | TinyUSB          | ESP32-Arduino           | hid_USB.cpp    |
-  | Dummy        | none             | none                    | hid_dummy.cpp  |
+  | Connectivity | Stack            | Wrapper                 | *Filename*      |
+  | ------------ | ---------------- | ----------------------- | --------------- |
+  | BLE          | NimBLE/Bluedroid | none/ESP32-Arduino core | hid_BLE.cpp     |
+  | BLE          | NimBLE           | h2zero/NimBLE-Arduino   | hid_h2zero.cpp  |
+  | USB          | TinyUSB          | ESP32-Arduino           | hid_USB.cpp     |
+  | USB+BLE      | TinyUSB & NimBLE | core & none             | hid_USB_BLE.cpp |
+  | Dummy        | none             | none                    | hid_dummy.cpp   |
 
   Those file names are case-sensitive.
 
@@ -356,12 +375,6 @@ If you go for a purely wired USB implementation:
   serial output to the USB serial interface.
   Use this configuration if you need to see error messages and
   your board doesn't have a secondary USB-to-UART connector.
-- There is no sense in using a battery-operated design
-  if you have USB power available.
-  For this reason, automatic shutdown is not available
-  within this implementation.
-- Note that you can not have both Bluetooth
-  and USB at the same time in the same device.
 
 ### Security lock
 
