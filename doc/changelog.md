@@ -1,5 +1,13 @@
 # Change log (and release notes)
 
+## 7.8.3
+
+- Combined USB and BLE connectivity is available
+  as a new HID implementation for boards that support both interfaces.
+  The firmware automatically switches between BLE and USB connectivity and back.
+  More information in `CustomizeHowTo.md`.
+- Thanks to the Discord user *banan2133* for the suggestion.
+
 ## 7.8.2
 
 - Fixed a bug causing ALPS funky switches to report rotation in

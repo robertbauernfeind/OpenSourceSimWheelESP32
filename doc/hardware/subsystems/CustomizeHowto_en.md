@@ -336,6 +336,7 @@ This project provides several (exclusive) connectivity choices:
     despite having the same VID, PID and serial number.
   - Custom VID/PID is not available.
   - Automatic shutdown is available.
+  - Works only on boards that have both interfaces only, like the ESP32-S3.
 
 - "Dummy" connectivity, available for troubleshooting.
   This option provides no connectivity at all.
