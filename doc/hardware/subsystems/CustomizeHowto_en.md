@@ -323,7 +323,7 @@ This project provides several (exclusive) connectivity choices:
   For this reason, automatic shutdown is not available
   within this implementation.
 
-- Simultaneous BLE and USB connectivity
+- Combined BLE and USB connectivity.
   There are some pros and cons:
 
   - For this to work, you have to configure **USB Mode** to
