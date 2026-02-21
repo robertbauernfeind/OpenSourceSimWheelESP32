@@ -13,6 +13,12 @@ however, each implementation requires a different sketch:
 - [BLE implementation based on raw NimBLE](./BLEimplTest/BLEimplTest.ino)
 - [BLE implementation based on h2zero's wrapper (NimBLE)](./h2zeroImplTest/h2zeroImplTest.ino)
 - [USB implementation](./USBImplTest/USBImplTest.ino)
+- [Combined USB+BLE implementation](./CombinedHIDImplTest/CombinedHIDImplTest.ino)
+
+  When running this sketch, this test procedure must be executed twice:
+  using BLE connectivity and again using USB connectivity.
+  The firmware automatically switches to USB connectivity when the USB cable
+  is plugged in.
 
 ## Hardware setup
 
@@ -74,9 +80,10 @@ Use this board configuration in Arduino IDE:
 - Ignore this output message while running this test:
   `(Waiting for connection)`.
 
-### Auto power off
+### Automatic shutdown
 
-Not applicable to the USB implementation.
+Not applicable to the USB implementation,
+but applicable to the combined USB+BLE implementation.
 
 1. Reset
 2. Output must show:
@@ -118,7 +125,9 @@ Not applicable to the USB implementation.
 
 ### Battery level
 
-Not applicable to the USB implementation.
+Not applicable to the USB implementation,
+but applicable to the combined USB+BLE implementation
+when the USB cable is not plugged in.
 
 1. Go to the Bluetooth page of the control panel.
    Look for the device.
@@ -190,7 +199,9 @@ That is the subject of another automated test.
 ### Reconnect
 
 Regression test for Issue #3.
-Not applicable to the USB implementation.
+Not applicable to the USB implementation,
+but applicable to the combined USB+BLE implementation
+when the USB cable is not plugged in.
 
 1. Reset. Wait a few seconds.
 2. Ensure the device is connected again to the host computer.
@@ -200,7 +211,9 @@ Not applicable to the USB implementation.
 
 ### Battery status (BLE only)
 
-Not applicable to the USB implementation.
+Not applicable to the USB implementation,
+but applicable to the combined USB+BLE implementation
+when the USB cable is not plugged in.
 To perform this test, you will type one-character commands into
 the serial monitor:
 
