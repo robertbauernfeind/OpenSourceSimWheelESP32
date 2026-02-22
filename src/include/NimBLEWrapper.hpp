@@ -15,7 +15,7 @@
 // Conditional compilation
 //------------------------------------------------------------------------------
 
-#include <Arduino.h> // For conditional compilation
+#include <sdkconfig.h> // For conditional compilation
 #include "SimWheelInternals.hpp" // BatteryStatusChrData
 
 #if CONFIG_NIMBLE_ENABLED
