@@ -218,8 +218,15 @@ You can ignore them:
 - *E (77) adc_oneshot: adc_oneshot_config_channel(180): invalid channel*
 - *E (173310) task_wdt: esp_task_wdt_reset(705): task not found*
 
-## USB not recognized error (ESP32S3 boards)
+## Other error messages
 
-If your host computer shows an "USB not recognized" error message,
-you **forgot to enable the USB implementation**.
-See ["Connectivity"](./hardware/subsystems/CustomizeHowto_en.md#connectivity).
+- \*\*\*ERROR\*\*\* A stack overflow in task arduino_usb_eve has been detected.
+
+  Go to `Arduino IDE > Tools > Core debug level` and set it
+  to `None` or `Error`. Then, upload the firmware again.
+
+- MS Windows "USB not recognized" error" message (ESP32S3 boards)
+
+  If your host computer shows an "USB not recognized" error message,
+  you **forgot to enable the USB implementation**.
+  See ["Connectivity"](./hardware/subsystems/CustomizeHowto_en.md#connectivity).
