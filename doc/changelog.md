@@ -1,5 +1,20 @@
 # Change log (and release notes)
 
+## 7.9.0
+
+- A new API call, `hid::connectivity()`, allows you to choose a
+  connectivity option: `Connectivity::BLE`, `Connectivity::USB`,
+  `Connectivity::USB_BLE` (combined) or `Connectivity::DUMMY` (none).
+  No need to mess with `includes.txt` in most cases.
+- Automatic shutdown now works with USB connectivity.
+  However, you may want to disable it in `hid::configure()` when
+  using USB-only connectivity.
+- Now a custom PID can be set when using USB connectivity,
+  but the custom VID will be ignored (as before).
+- The files `hid_BLE.cpp` and `hid_USB` have been removed as
+  `hid_USB_BLE.cpp` substitutes them.
+- You have to run the sources setup procedure again.
+
 ## 7.8.3
 
 - Combined USB and BLE connectivity is available

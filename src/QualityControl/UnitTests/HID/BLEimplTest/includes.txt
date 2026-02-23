@@ -1,4 +1,4 @@
-hid_BLE.cpp
+hid_USB_BLE.cpp
 NimBLEWrapper.cpp
 hidCommon.cpp
 hidTestHelper.cpp

@@ -895,6 +895,23 @@ enum class PowerLatchMode : uint8_t
 };
 
 //-------------------------------------------------------------------
+// Connectivity
+//-------------------------------------------------------------------
+
+enum class Connectivity : uint8_t
+{
+    /// @brief Combined USB and BLE connectivity if available
+    /// @note This is the default
+    USB_BLE = 0,
+    /// @brief USB connectivity only, if available
+    USB,
+    /// @brief BLE connectivity only, if available
+    BLE,
+    /// @brief No connectivity at all (for troubleshooting)
+    DUMMY
+};
+
+//-------------------------------------------------------------------
 // LED strips
 //-------------------------------------------------------------------
 

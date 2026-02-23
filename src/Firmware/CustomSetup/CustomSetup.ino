@@ -118,6 +118,22 @@ std::string DEVICE_MANUFACTURER = "Me";
 // [ES] Sustituya <here> con un número de 16 bits distinto de cero
 //      como identificador de fabricante/producto a medida
 
+/* -----------------------------------------------------------------
+ >>>> [EN] CONNECTIVITY CHOICE
+ >>>> [ES] ELECCIÓN DE CONECTIVIDAD
+------------------------------------------------------------------ */
+
+// [EN] Uncomment the choosen option and comment out the others
+// [ES] Descomente la opción elegida y comente las demás
+
+static Connectivity connectivity_choice = Connectivity::USB_BLE; // default
+// static Connectivity connectivity_choice = Connectivity::USB;
+// static Connectivity connectivity_choice = Connectivity::BLE;
+
+//      [EN] For troubleshooting only
+//      [ES] Sólo para diagnóstico de problemas
+// static Connectivity connectivity_choice = Connectivity::DUMMY;
+
 //------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------
@@ -175,6 +191,8 @@ void customFirmware()
 #endif
 #endif
     );
+
+    hid::connectivity(connectivity_choice);
 
 #if defined(ENABLE_FUEL_GAUGE)
     batteryMonitor::configure();

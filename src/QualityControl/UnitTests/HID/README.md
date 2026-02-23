@@ -7,13 +7,21 @@ To test that:
 - the device works properly as a gamepad in a computer.
 - the device can send and receive data by the means of HID feature reports.
 
-This procedure is the same for all HID implementations,
-however, each implementation requires a different sketch:
+This procedure is the same for USB and BLE connectivity,
+however, a different sketch may be needed:
 
-- [BLE implementation based on raw NimBLE](./BLEimplTest/BLEimplTest.ino)
-- [BLE implementation based on h2zero's wrapper (NimBLE)](./h2zeroImplTest/h2zeroImplTest.ino)
-- [USB implementation](./USBImplTest/USBImplTest.ino)
-- [Combined USB+BLE implementation](./CombinedHIDImplTest/CombinedHIDImplTest.ino)
+- To test the BLE implementation based on h2zero's wrapper (NimBLE):
+  [h2zeroImplTest.ino](./h2zeroImplTest/h2zeroImplTest.ino)
+
+- To test the BLE implementation (only) on boards not having USB-TO-UART port:
+  [BLEimplTest.ino](./BLEimplTest/BLEimplTest.ino)
+
+- To test the USB implementation (only) on boards not having USB-TO-UART port,
+  but having USB-OTG support:
+  [USBImplTest.ino](./USBImplTest/USBImplTest.ino)
+
+- In other cases:
+  [CombinedHIDImplTest.ino](./CombinedHIDImplTest/CombinedHIDImplTest.ino)
 
   When running this sketch, this test procedure must be executed twice:
   using BLE connectivity and again using USB connectivity.
@@ -24,7 +32,7 @@ however, each implementation requires a different sketch:
 
 - BLE implementations: nothing required, except for an
   external antenna on some devices.
-- USB implementation: an ESP32-S3 DevKit board is required
+- USB implementation: a board with USB-OTG support is required
   (LillyGo T-QT and ESP32S3-DevKit-C were tested).
 
 Output through USB serial port at 115200 bauds.

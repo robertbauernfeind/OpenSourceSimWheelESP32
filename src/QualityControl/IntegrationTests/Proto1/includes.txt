@@ -1,6 +1,6 @@
 firmware.cpp
 HAL.cpp
-hid_BLE.cpp
+hid_USB_BLE.cpp
 hidCommon.cpp
 InputHardware.cpp
 inputHub.cpp

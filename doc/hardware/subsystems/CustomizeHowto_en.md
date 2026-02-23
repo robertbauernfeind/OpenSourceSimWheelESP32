@@ -299,44 +299,11 @@ Note that the following input numbers have a special meaning in Windows:
 
 ### Connectivity
 
-This project provides several (exclusive) connectivity choices:
+This project provides several connectivity choices:
 
-- Bluetooth Low Energy (BLE) using the
-  [NimBLE stack](https://mynewt.apache.org/latest/network/)
-  without a wrapper (no additional libraries required),
-  except for "pure" ESP32 DevKit boards (like the "ESP32-DevKit-C"),
-  which uses the *Bluedroid* stack via the *ESP32-Arduino* wrapper.
-  Starting with *ESP32-Arduino* version 4.0.0,
-  all boards will have the *NimBLE* stack.
-  This is the default.
-  If you are happy with this, ignore this section.
-
-- Bluetooth Low Energy (BLE) using the *NimBLE* wrapper
-  from [h2zero](https://github.com/h2zero).
-  You must install the
-  [h2zero/NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino)
-  library in this case.
+- Bluetooth Low Energy (BLE).
 
 - Universal Serial Bus (USB).
-  There is no sense in using a battery-operated design
-  if you have USB power available.
-  For this reason, automatic shutdown is not available
-  within this implementation.
-
-- Combined BLE and USB connectivity.
-  There are some pros and cons:
-
-  - For this to work, you have to configure **USB Mode** to
-    **USB-OTG (TinyUSB)** in Arduino IDE ("Tools" menu).
-    Otherwise, only BLE connectivity will work.
-  - USB connectivity takes precedence over BLE connectivity.
-    Switching from one to the other is automatic.
-  - When switching connectivity, the device will briefly disconnect.
-  - Your simulator may detect each connectivity option as a different device
-    despite having the same VID, PID and serial number.
-  - Custom VID/PID is not available.
-  - Automatic shutdown is available.
-  - Works only on boards that have both interfaces only, like the ESP32-S3.
 
 - "Dummy" connectivity, available for troubleshooting.
   This option provides no connectivity at all.
@@ -345,21 +312,52 @@ This project provides several (exclusive) connectivity choices:
   This is the case when using USB connectivity on a DevKit board
   with only one USB header.
 
-In order to use any of them:
+Combined USB and BLE connectivity is the default:
+
+- Transparently ignores USB connectivity if USB-OTG is not supported
+  by your board.
+- USB connectivity takes precedence over BLE connectivity.
+  Switching from one to the other is automatic.
+- When switching connectivity, the device will briefly disconnect.
+- Your simulator may detect each connectivity option as a different device
+  despite having the same VID, PID and serial number.
+- Automatic shutdown is available.
+
+To choose a connectivity option:
+
+- Locate the following lines in your copy of `CustomSetup.ino`:
+
+  ```c++
+  static Connectivity connectivity_choice = Connectivity::USB_BLE;
+  static Connectivity connectivity_choice = Connectivity::USB;
+  static Connectivity connectivity_choice = Connectivity::BLE;
+  static Connectivity connectivity_choice = Connectivity::DUMMY;
+  ```
+
+Comment out all of them except for your choice.
+
+> [!TIP]
+> See ["Changing your device's display name (Windows only) or Hardware ID"](./RenameDeviceWin_en.md)
+> for additional customization options regarding connectivity.
+
+#### BLE Connectivity using h2zero's wrapper
+
+BLE connectivity is also available via the *NimBLE* wrapper from
+[h2zero](https://github.com/h2zero).
+You must install the
+[h2zero/NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino)
+library in this case.
+This choice will be removed after *ESP32-Arduino*
+version 4.0.0 is released.
+Simultaneous USB connectivity does not work within this choice.
+
+In order to use this:
 
 - Edit the file **"includes.txt"** at your sketch folder.
-  Replace the file name in this table with another from
-  the same table.
-
-  | Connectivity | Stack            | Wrapper                 | *Filename*      |
-  | ------------ | ---------------- | ----------------------- | --------------- |
-  | BLE          | NimBLE/Bluedroid | none/ESP32-Arduino core | hid_BLE.cpp     |
-  | BLE          | NimBLE           | h2zero/NimBLE-Arduino   | hid_h2zero.cpp  |
-  | USB          | TinyUSB          | ESP32-Arduino           | hid_USB.cpp     |
-  | USB+BLE      | TinyUSB & NimBLE | core & none             | hid_USB_BLE.cpp |
-  | Dummy        | none             | none                    | hid_dummy.cpp   |
-
-  Those file names are case-sensitive.
+  It contains a list of filenames.
+  Locate and the file name `hid_USB_BLE.cpp`
+  and replace with `hid_h2zero.cpp`
+  **Those file names are case-sensitive**.
 
 - Do not confuse those with "hidCommon.cpp".
   Do not touch that line.

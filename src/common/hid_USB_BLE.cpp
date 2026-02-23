@@ -3,8 +3,8 @@
  *
  * @author Ángel Fernández Pineda. Madrid. Spain.
  * @date 2026-02-19
- * @brief Implementation of a HID device through the tinyUSB and
- *        NimBLE stacks
+ * @brief Implementation of a HID device through the tinyUSB,
+ *        Bluedroid and NimBLE stacks
  *
  * @copyright Licensed under the EUPL
  *
@@ -21,10 +21,28 @@
 #include "esp_mac.h"       // For esp_efuse_mac_get_default()
 #include "esp32-hal-log.h" // Logging
 #include <cstring>         // For memcpy
+#include <stdexcept>       // For runtime_error
 
 // ----------------------------------------------------------------------------
 // Globals
 // ----------------------------------------------------------------------------
+
+// Related to available connectivity
+#if SOC_USB_OTG_SUPPORTED && CONFIG_TINYUSB_ENABLED
+#define USB_AVAILABLE 1
+#else
+#define USB_AVAILABLE 0
+#endif
+
+#if CONFIG_NIMBLE_ENABLED || CONFIG_BLUEDROID_ENABLED
+#define BLE_AVAILABLE 1
+#else
+#define BLE_AVAILABLE 0
+#endif
+
+#if !BLE_AVAILABLE && !USB_AVAILABLE
+#error Your board does not support BLE nor USB
+#endif
 
 // Related to the connection state machine
 #define STATE_NOT_CONNECTED 0
@@ -39,14 +57,14 @@ static esp_timer_handle_t autoPowerOffTimer = nullptr;
 // Related to HID
 static uint8_t inputReportData[GAMEPAD_REPORT_SIZE] = {0};
 static bool notifyConfigChanges = false;
-USBHID usbHid;
 
-// We create a new USB instance as the default stack size is not enough
-ESPUSB USB_instance(4096);
-#define USB USB_instance
+// Forward declaration
+void new_connection_state(uint8_t new_state);
 
 // ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Automatic shutdown
+// ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
 void autoPowerOffCallback(void *unused)
@@ -55,64 +73,17 @@ void autoPowerOffCallback(void *unused)
 }
 
 // ----------------------------------------------------------------------------
-// State machine for connection status
-//
-// stateDiagram-v2
-//   state "Not connected" as not_connected
-//   state "BLE connected, USB disconnected" as ble
-//   state "USB connected, BLE disconnected" as usb
-//   [*] --> not_connected
-//   not_connected --> [*]: timeout
-//   not_connected --> ble: BLE connection
-//   not_connected --> usb: USB connection
-//   usb --> not_connected: USB disconnection
-//   ble --> not_connected: BLE disconnection
-// ----------------------------------------------------------------------------
-
-void new_connection_state(uint8_t new_state)
-{
-    switch (new_state)
-    {
-    case STATE_NOT_CONNECTED:
-    {
-        connection_state = STATE_NOT_CONNECTED;
-        OnDisconnected::notify();
-        BLEAdvertising::start();
-        if (autoPowerOffTimer != nullptr)
-            esp_timer_start_once(
-                autoPowerOffTimer,
-                AUTO_POWER_OFF_DELAY_SECS * 1000000);
-    }
-    break;
-    case STATE_BLE_CONNECTED:
-    {
-        if (autoPowerOffTimer != nullptr)
-            esp_timer_stop(autoPowerOffTimer);
-        connection_state = STATE_BLE_CONNECTED;
-        OnConnected::notify();
-    }
-    break;
-    case STATE_USB_CONNECTED:
-    {
-        if (autoPowerOffTimer != nullptr)
-            esp_timer_stop(autoPowerOffTimer);
-        // Disable BLE connectivity
-        connection_state = STATE_USB_CONNECTED;
-        BLEAdvertising::stop();
-        // Note: this may trigger onBleConnectionStatus(false)
-        // so we have to change the state before it gets called
-        BLEAdvertising::disconnect();
-        OnConnected::notify();
-    }
-    break;
-    default:
-        break;
-    }
-}
-
 // ----------------------------------------------------------------------------
 // USB
 // ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+#if USB_AVAILABLE
+
+// We create a new USB instance as the default stack size is not enough
+USBHID usbHid;
+ESPUSB USB_instance(4096);
+#define USB USB_instance
 
 class SimWheelUsbHid : public USBHIDDevice
 {
@@ -187,9 +158,15 @@ public:
 
 } usbSimWheel;
 
+#endif // USB_AVAILABLE
+
 // ----------------------------------------------------------------------------
-// BLE
 // ----------------------------------------------------------------------------
+// NimBLE
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+#if CONFIG_NIMBLE_ENABLED
 
 void onBleConnectionStatus(bool connected)
 {
@@ -205,9 +182,282 @@ uint16_t onInputReport(uint8_t reportId, uint8_t *data, uint16_t size)
     memcpy(data, inputReportData, size);
     return size;
 }
+#endif // CONFIG_NIMBLE_ENABLED
 
 // ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Bluedroid
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+#if CONFIG_BLUEDROID_ENABLED && !CONFIG_NIMBLE_ENABLED
+
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+#include <BLEHIDDevice.h>
+#include "HIDTypes.h"
+#include "HIDKeyboardTypes.h"
+#include "sdkconfig.h"
+#include "esp_gap_ble_api.h"
+#include <vector>
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+class BLEHIDDeviceFix;
+static BLEHIDDeviceFix *hidDevice = nullptr;
+static BLECharacteristic *inputGamePad = nullptr;
+static BLECharacteristic *battStatusChr = nullptr;
+static BLEServer *pServer = nullptr;
+static constexpr uint16_t serialNumberChrUuid = BLE_SERIAL_NUMBER_CHR_UUID;
+static constexpr uint16_t batteryStatusChrUuid = BLE_BATTERY_STATUS_CHR_UUID;
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// BLEHIDDeviceFix
+//
+// This subclass is a workaround for a bug in Arduino-ESP32.
+// Notifications get randomly disabled in the input report.
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+class BLEHIDDeviceFix : public BLEHIDDevice
+{
+public:
+    BLECharacteristic *inputReport(uint8_t reportID)
+    {
+        BLECharacteristic *inputReportCharacteristic =
+            hidService()->createCharacteristic(
+                (uint16_t)0x2a4d, BLECharacteristic::PROPERTY_READ |
+                                      BLECharacteristic::PROPERTY_NOTIFY);
+        BLEDescriptor *inputReportDescriptor =
+            new BLEDescriptor(BLEUUID((uint16_t)0x2908));
+        BLE2902 *p2902 = new BLE2902();
+        inputReportCharacteristic->setAccessPermissions(
+            ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
+        inputReportDescriptor->setAccessPermissions(
+            ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
+        p2902->setAccessPermissions(
+            ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
+        p2902->setNotifications(true);
+        p2902->setIndications(true);
+
+        uint8_t desc1_val[] = {reportID, 0x01};
+        inputReportDescriptor->setValue((uint8_t *)desc1_val, 2);
+        inputReportCharacteristic->addDescriptor(p2902);
+        inputReportCharacteristic->addDescriptor(inputReportDescriptor);
+
+        return inputReportCharacteristic;
+    }
+
+    BLEHIDDeviceFix(BLEServer *pServer) : BLEHIDDevice(pServer) {}
+};
+
+uint16_t byteswap(uint16_t value)
+{
+    return (value >> 8) | (value << 8);
+}
+
+class BleConnectionStatus : public BLEServerCallbacks
+{
+public:
+    BleConnectionStatus(void) {};
+    bool connected = false;
+    void onConnect(BLEServer *pServer) override
+    {
+        if (autoPowerOffTimer != nullptr)
+            esp_timer_stop(autoPowerOffTimer);
+        internals::hid::reset();
+        connected = true;
+        OnConnected::notify();
+    };
+
+    void onDisconnect(BLEServer *pServer) override
+    {
+        connected = false;
+        BLEDevice::startAdvertising();
+        OnDisconnected::notify();
+        if (autoPowerOffTimer != nullptr)
+            esp_timer_start_once(
+                autoPowerOffTimer,
+                AUTO_POWER_OFF_DELAY_SECS * 1000000);
+    };
+
+} connectionStatus;
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// HID FEATURE REQUEST callbacks
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+class FeatureReport : public BLECharacteristicCallbacks
+{
+public:
+    void onWrite(BLECharacteristic *pCharacteristic) override;
+    void onRead(BLECharacteristic *pCharacteristic) override;
+    FeatureReport(uint8_t RID, uint16_t size);
+    static void attachTo(
+        BLEHIDDeviceFix *hidDevice,
+        uint8_t RID,
+        uint16_t size);
+
+private:
+    uint8_t _reportID;
+    uint16_t _reportSize;
+};
+
+// RECEIVE DATA
+void FeatureReport::onWrite(BLECharacteristic *pCharacteristic)
+{
+    size_t size = pCharacteristic->getValue().length();
+    const uint8_t *data = pCharacteristic->getData();
+    internals::hid::common::onSetFeature(_reportID, data, size);
+}
+
+// SEND REQUESTED DATA
+void FeatureReport::onRead(BLECharacteristic *pCharacteristic)
+{
+    uint8_t data[_reportSize];
+    internals::hid::common::onGetFeature(_reportID, data, _reportSize);
+    pCharacteristic->setValue(data, _reportSize);
+}
+
+// Constructor
+FeatureReport::FeatureReport(uint8_t RID, uint16_t size)
+{
+    _reportID = RID;
+    _reportSize = size;
+}
+
+// Attach to HID device
+void FeatureReport::attachTo(
+    BLEHIDDeviceFix *hidDevice,
+    uint8_t RID,
+    uint16_t size)
+{
+    BLECharacteristic *reportCharacteristic = hidDevice->featureReport(RID);
+    if (!reportCharacteristic)
+    {
+        log_e("Unable to create HID report characteristics");
+        abort();
+    }
+    reportCharacteristic->setCallbacks(new FeatureReport(RID, size));
+}
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// HID OUTPUT REPORT callbacks
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+class OutputReport : public BLECharacteristicCallbacks
+{
+public:
+    void onWrite(BLECharacteristic *pCharacteristic) override;
+    OutputReport(uint8_t RID);
+    static void attachTo(BLEHIDDeviceFix *hidDevice, uint8_t RID);
+
+private:
+    uint8_t _reportID;
+};
+
+OutputReport::OutputReport(uint8_t RID)
+{
+    _reportID = RID;
+}
+
+// RECEIVE DATA
+void OutputReport::onWrite(BLECharacteristic *pCharacteristic)
+{
+    size_t size = pCharacteristic->getValue().length();
+    const uint8_t *data = pCharacteristic->getData();
+    internals::hid::common::onOutput(_reportID, data, size);
+}
+
+// Attach to HID device
+void OutputReport::attachTo(BLEHIDDeviceFix *hidDevice, uint8_t RID)
+{
+    BLECharacteristic *reportCharacteristic = hidDevice->outputReport(RID);
+    if (!reportCharacteristic)
+    {
+        log_e("Unable to create HID report characteristics");
+        abort();
+    }
+    reportCharacteristic->setCallbacks(new OutputReport(RID));
+}
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#endif // CONFIG_BLUEDROID_ENABLED && !CONFIG_NIMBLE_ENABLED
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// State machine for connection status
+//
+// stateDiagram-v2
+//   state "Not connected" as not_connected
+//   state "BLE connected, USB disconnected" as ble
+//   state "USB connected, BLE disconnected" as usb
+//   [*] --> not_connected
+//   not_connected --> [*]: timeout
+//   not_connected --> ble: BLE connection
+//   not_connected --> usb: USB connection
+//   usb --> not_connected: USB disconnection
+//   ble --> not_connected: BLE disconnection
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+void new_connection_state(uint8_t new_state)
+{
+    switch (new_state)
+    {
+    case STATE_NOT_CONNECTED:
+    {
+        connection_state = STATE_NOT_CONNECTED;
+        OnDisconnected::notify();
+#if CONFIG_NIMBLE_ENABLED
+        BLEAdvertising::start();
+#elif CONFIG_BLUEDROID_ENABLED
+        connectionStatus.onDisconnect(pServer); // start advertising
+#endif
+        if (autoPowerOffTimer != nullptr)
+            esp_timer_start_once(
+                autoPowerOffTimer,
+                AUTO_POWER_OFF_DELAY_SECS * 1000000);
+    }
+    break;
+    case STATE_BLE_CONNECTED:
+    {
+        if (autoPowerOffTimer != nullptr)
+            esp_timer_stop(autoPowerOffTimer);
+        connection_state = STATE_BLE_CONNECTED;
+        OnConnected::notify();
+    }
+    break;
+    case STATE_USB_CONNECTED:
+    {
+        if (autoPowerOffTimer != nullptr)
+            esp_timer_stop(autoPowerOffTimer);
+        // Disable BLE connectivity
+        connection_state = STATE_USB_CONNECTED;
+#if CONFIG_NIMBLE_ENABLED
+        BLEAdvertising::stop();
+        // Note: this may trigger onBleConnectionStatus(false)
+        // so we have to change the state before it gets called
+        BLEAdvertising::disconnect();
+#elif CONFIG_BLUEDROID_ENABLED
+        BLEDevice::stopAdvertising();
+        std::map<uint16_t, conn_status_t> devices = pServer->getPeerDevices(false);
+        for (auto device : devices)
+            pServer->disconnect(device.first);
+#endif
+        OnConnected::notify();
+    }
+    break;
+    default:
+        break;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Initialization
+// ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
 void internals::hid::begin(
@@ -215,9 +465,24 @@ void internals::hid::begin(
     std::string deviceManufacturer,
     bool enableAutoPowerOff,
     uint16_t vendorID,
-    uint16_t productID)
+    uint16_t productID,
+    bool usb_enable,
+    bool ble_enable)
 {
     internals::hid::common::onReset(inputReportData);
+
+#if USB_AVAILABLE
+    if (usb_enable)
+        vendorID = USB.VID();
+#else
+    usb_enable = false;
+#endif
+#if !BLE_AVAILABLE
+    ble_enable = false;
+#endif
+
+    if (!usb_enable && !ble_enable)
+        throw ::std::runtime_error("There is no HID connectivity");
 
     if (enableAutoPowerOff && !autoPowerOffTimer)
     {
@@ -229,7 +494,8 @@ void internals::hid::begin(
         ESP_ERROR_CHECK(esp_timer_create(&args, &autoPowerOffTimer));
     }
 
-    if (!BLEDevice::initialized())
+#if CONFIG_NIMBLE_ENABLED
+    if (!BLEDevice::initialized() && ble_enable)
     {
         // BLE initialization
         BLEAdvertising::onConnectionStatus = onBleConnectionStatus;
@@ -241,18 +507,137 @@ void internals::hid::begin(
         BLEHIDService::onWriteOutputReport =
             internals::hid::common::onOutput;
         BLEDeviceInfoService::manufacturer.name = deviceManufacturer;
-        BLEDeviceInfoService::pnpInfo.vid = USB.VID();
-        BLEDeviceInfoService::pnpInfo.pid = USB.PID();
+        BLEDeviceInfoService::pnpInfo.vid = vendorID;
+        BLEDeviceInfoService::pnpInfo.pid = productID;
         BLEDevice::init(deviceName);
     }
 
-    if (!usbHid.ready())
+#elif CONFIG_BLUEDROID_ENABLED
+
+    if ((hidDevice == nullptr) && ble_enable)
+    {
+        // Stack initialization
+        BLEDevice::init(String(deviceName.c_str()));
+        BLEDevice::setMTU(BLE_MTU_SIZE);
+        pServer = BLEDevice::createServer();
+        pServer->advertiseOnDisconnect(false);
+        pServer->setCallbacks(&connectionStatus);
+        BLESecurity *pSecurity = new BLESecurity();
+        pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
+        pSecurity->setInitEncryptionKey(
+            ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+
+        // HID initialization
+        hidDevice = new BLEHIDDeviceFix(pServer);
+        if (!hidDevice)
+            throw std::runtime_error("Unable to create HID device");
+
+        hidDevice->manufacturer()->setValue(
+            // Workaround for bug in
+            // `hidDevice->manufacturer(deviceManufacturer)`
+            String(deviceManufacturer.c_str()));
+
+        // Note: Workaround for bug in ESP-Arduino as of version 3.0.3
+        uint16_t debugged_vid = byteswap(vendorID);
+        uint16_t debugged_pid = byteswap(productID);
+
+        hidDevice->pnp(
+            BLE_VENDOR_SOURCE,
+            debugged_vid,
+            debugged_pid,
+            PRODUCT_REVISION);
+        hidDevice->hidInfo(0x00, 0x01);
+        hidDevice->reportMap((uint8_t *)hid_descriptor, sizeof(hid_descriptor));
+
+        // Add the serial number to the "Device Information" service
+        uint64_t serialNumber;
+        if (esp_efuse_mac_get_default((uint8_t *)(&serialNumber)) == ESP_OK)
+        {
+            BLEService *deviceInfo = hidDevice->deviceInfo();
+            if (deviceInfo)
+            {
+                BLECharacteristic *serialNumChr =
+                    deviceInfo->getCharacteristic(serialNumberChrUuid);
+                if (!serialNumChr)
+                    serialNumChr =
+                        deviceInfo->createCharacteristic(
+                            serialNumberChrUuid,
+                            BLECharacteristic::PROPERTY_READ);
+                if (serialNumChr)
+                {
+                    char serialAsStr[9];
+                    memset(serialAsStr, 0, 9);
+                    snprintf(serialAsStr, 9, "%08llX", serialNumber);
+                    serialNumChr->setValue(serialAsStr);
+                }
+            }
+        }
+
+        // Expand the battery service with a
+        // "battery level status" characteristic
+        BLEService *battService = hidDevice->batteryService();
+        assert(battService && "BLE: hidDevice->batteryService() failed");
+        battStatusChr = battService->createCharacteristic(
+            batteryStatusChrUuid,
+            BLECharacteristic::PROPERTY_READ |
+                BLECharacteristic::PROPERTY_NOTIFY);
+        assert(battStatusChr &&
+               "BLE: Unable to create the battery level status characteristic");
+        BLE2902 *p2902 = new BLE2902();
+        p2902->setNotifications(true);
+        battStatusChr->addDescriptor(p2902);
+
+        // Create HID reports
+        inputGamePad = hidDevice->inputReport(RID_INPUT_GAMEPAD);
+        FeatureReport::attachTo(
+            hidDevice, RID_FEATURE_CAPABILITIES, CAPABILITIES_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice, RID_FEATURE_CONFIG, CONFIG_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice, RID_FEATURE_BUTTONS_MAP, BUTTONS_MAP_REPORT_SIZE);
+        FeatureReport::attachTo(
+            hidDevice, RID_FEATURE_HARDWARE_ID, HARDWARE_ID_REPORT_SIZE);
+        OutputReport::attachTo(hidDevice, RID_OUTPUT_POWERTRAIN);
+        OutputReport::attachTo(hidDevice, RID_OUTPUT_ECU);
+        OutputReport::attachTo(hidDevice, RID_OUTPUT_RACE_CONTROL);
+        OutputReport::attachTo(hidDevice, RID_OUTPUT_GAUGES);
+        OutputReport::attachTo(hidDevice, RID_OUTPUT_PIXEL);
+
+        // Configure BLE advertising
+        BLEAdvertising *pAdvertising = pServer->getAdvertising();
+        pAdvertising->setAppearance(HID_GAMEPAD);
+        pAdvertising->setScanResponse(true);
+        pAdvertising->setMinPreferred(0x06);
+        pAdvertising->setMinPreferred(0x12);
+        pAdvertising->addServiceUUID(hidDevice->hidService()->getUUID());
+        pAdvertising->addServiceUUID(hidDevice->batteryService()->getUUID());
+        pAdvertising->addServiceUUID(hidDevice->deviceInfo()->getUUID());
+
+        // Start services
+        hidDevice->startServices();
+        hidDevice->setBatteryLevel(0);
+        // Initialize the battery status to 100% charge and wired.
+        // Otherwise, non-battery-operated firmwares may cause
+        // a low battery warning in the hosting PC
+        BatteryStatus defaultBatteryStatus;
+        defaultBatteryStatus.stateOfCharge = 100;
+        defaultBatteryStatus.usingExternalPower = true;
+        internals::hid::reportBatteryLevel(defaultBatteryStatus);
+
+        connectionStatus.onDisconnect(pServer); // start advertising
+    }
+
+#endif // CONFIG_NIMBLE_ENABLED
+
+#if USB_AVAILABLE
+    if (!usbHid.ready() && usb_enable)
     {
         // USB Initialization
         USB.productName(deviceName.c_str());
         USB.manufacturerName(deviceManufacturer.c_str());
         USB.usbClass(0x03); // HID device class
         USB.usbSubClass(0); // No subclass
+        USB.PID(productID);
         uint64_t serialNumber;
         if (esp_efuse_mac_get_default((uint8_t *)(&serialNumber)) == ESP_OK)
         {
@@ -270,6 +655,7 @@ void internals::hid::begin(
         usbHid.begin();
         USB.begin();
     }
+#endif // USB_AVAILABLE
 
     new_connection_state(STATE_NOT_CONNECTED);
 }
@@ -283,8 +669,18 @@ void internals::hid::reset()
     internals::hid::common::onReset(inputReportData);
     if (connection_state == STATE_BLE_CONNECTED)
     {
+#if CONFIG_NIMBLE_ENABLED
         BLEHIDService::input_report.notify();
+
+#elif CONFIG_BLUEDROID_ENABLED
+
+        inputGamePad->setValue(inputReportData, GAMEPAD_REPORT_SIZE);
+        inputGamePad->notify();
+
+#endif // CONFIG_NIMBLE_ENABLED
     }
+
+#if USB_AVAILABLE
     else if (connection_state == STATE_USB_CONNECTED)
     {
         usbHid.SendReport(
@@ -292,6 +688,7 @@ void internals::hid::reset()
             inputReportData,
             GAMEPAD_REPORT_SIZE);
     }
+#endif // USB_AVAILABLE
 }
 
 void internals::hid::reportInput(
@@ -313,8 +710,17 @@ void internals::hid::reportInput(
         clutchAxis);
     if (connection_state == STATE_BLE_CONNECTED)
     {
+#if CONFIG_NIMBLE_ENABLED
         BLEHIDService::input_report.notify();
+
+#elif CONFIG_BLUEDROID_ENABLED
+
+        inputGamePad->setValue(inputReportData, GAMEPAD_REPORT_SIZE);
+        inputGamePad->notify(true);
+
+#endif // CONFIG_NIMBLE_ENABLED
     }
+#if USB_AVAILABLE
     else if (connection_state == STATE_USB_CONNECTED)
     {
         usbHid.SendReport(
@@ -322,14 +728,33 @@ void internals::hid::reportInput(
             inputReportData,
             GAMEPAD_REPORT_SIZE);
     }
+#endif // USB_AVAILABLE
 }
 
 void internals::hid::reportBatteryLevel(const BatteryStatus &status)
 {
+#if CONFIG_NIMBLE_ENABLED
     BatteryStatusChrData result =
         internals::hid::common::toBleBatteryStatus(status);
     BLEBatteryService::batteryStatus.set(result);
     BLEBatteryService::batteryLevel.set(result.battery_level);
+
+#elif CONFIG_BLUEDROID_ENABLED
+
+    if (connectionStatus.connected)
+    {
+        // -- Battery level status characteristic
+        BatteryStatusChrData result =
+            internals::hid::common::toBleBatteryStatus(status);
+        battStatusChr->setValue(
+            (const uint8_t *)(&result),
+            sizeof(result));
+        battStatusChr->notify();
+
+        // -- Battery level characteristic
+        hidDevice->setBatteryLevel(result.battery_level);
+    }
+#endif // CONFIG_NIMBLE_ENABLED
 }
 
 void internals::hid::reportChangeInConfig()
@@ -337,7 +762,7 @@ void internals::hid::reportChangeInConfig()
     notifyConfigChanges = true; // Will be reported in the next input report
 }
 
-bool internals::hid::supportsCustomHardwareID() { return false; }
+bool internals::hid::supportsCustomHardwareID() { return true; }
 
 // ----------------------------------------------------------------------------
 // Status
@@ -345,5 +770,15 @@ bool internals::hid::supportsCustomHardwareID() { return false; }
 
 bool internals::hid::isConnected()
 {
-    return usbHid.ready() || BLEAdvertising::connected();
+    return
+#if USB_AVAILABLE
+        usbHid.ready() ||
+#endif // USB_AVAILABLE
+#if CONFIG_NIMBLE_ENABLED
+        BLEAdvertising::connected();
+#elif CONFIG_BLUEDROID_ENABLED
+        connectionStatus.connected;
+#else
+        true;
+#endif // CONFIG_NIMBLE_ENABLED
 }

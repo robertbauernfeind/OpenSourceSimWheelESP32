@@ -31,5 +31,6 @@ void internals::hid::begin(
     std::string deviceManufacturer,
     bool enableAutoPowerOff,
     uint16_t vendorID,
-    uint16_t productID) {}
-
+    uint16_t productID,
+    bool usb_enable,
+    bool ble_enable) {}

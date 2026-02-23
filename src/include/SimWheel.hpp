@@ -572,7 +572,7 @@ namespace hid
      *                 Ignored in the USB implementation.
      * @param productID Factory PID. Set to zero to use a default product ID.
      *                  Value 0xFFFF is reserved for testing.
-     *                  Ignored in the USB implementation.
+     * @param connectivity Connectivity choice
      */
     void configure(
         std::string deviceName,
@@ -580,6 +580,18 @@ namespace hid
         bool enableAutoPowerOff = true,
         uint16_t vendorID = 0,
         uint16_t productID = 0);
+
+    /**
+     * @brief Choose a connectivity option
+     *
+     * @warning Your connectivity choice will be ignored if not available
+     *          in the DevKit board. If both USB and BLE are unavailable
+     *          or excluded from @p option , the firmware won't boot
+     *          (with an error message).
+     *
+     * @param option Connectivity option
+     */
+    void connectivity(Connectivity option);
 } // namespace hid
 
 //-------------------------------------------------------------------

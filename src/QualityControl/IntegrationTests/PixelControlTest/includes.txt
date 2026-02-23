@@ -3,5 +3,5 @@ pixels.cpp
 telemetry.cpp
 ui.cpp
 hidCommon.cpp
-hid_BLE.cpp
+hid_USB_BLE.cpp
 HAL.cpp

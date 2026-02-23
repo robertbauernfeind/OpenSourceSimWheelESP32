@@ -9,5 +9,6 @@
  *
  */
 
+#define USB_ONLY 1
 #define HID_TESTER "USBimplTest"
 #include "hidTestHelper.cpp"

@@ -265,18 +265,31 @@ namespace internals
         /**
          * @brief Start BLE/Bluetooth HID
          *
+         * @warning Setting both @p usb_enable and @p ble_enable to false
+         *          will cause a runtime error
+         *
+         * @note When USB is enabled, @p VID will be ignored as
+         *       another USB-IF license would be required.
+         *       However, Espressif (the license holder)
+         *       allows to use a custom @p PID .
+         *       See https://docs.espressif.com/projects/esp-iot-solution/en/latest/usb/usb_overview/usb_vid_pid.html
+         *
          * @param deviceName Configured device name
          * @param deviceManufacturer Configured device manufacturer
          * @param enableAutoPowerOff Request for automatic shutdown (may be ignored)
          * @param VID Configured custom vendor ID (may be ignored)
-         * @param PID Configured custom product ID (may be ignored)
+         * @param PID Configured custom product ID
+         * @param usb_enable if true and available, USB connectivity is enabled
+         * @param ble_enable if true and available, BLE connectivity is enabled
          */
         void begin(
             std::string deviceName,
             std::string deviceManufacturer,
             bool enableAutoPowerOff,
             uint16_t VID,
-            uint16_t PID);
+            uint16_t PID,
+            bool usb_enable = true,
+            bool ble_enable = true);
 
         /**
          * @brief Support for a custom PID/VID

@@ -9,5 +9,6 @@
  *
  */
 
+#define BLE_ONLY 1
 #define HID_TESTER "h2zeroImplTest"
 #include "hidTestHelper.cpp"

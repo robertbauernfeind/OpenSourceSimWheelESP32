@@ -814,9 +814,9 @@ The bit-oriented queue shows the following properties:
 
 ## About automatic shutdown
 
-In a battery-operated system, when there is no Bluetooth connection,
+When there is no Bluetooth connection,
 the systems goes to advertising.
-If no connection is made in a certain time lapse,
+If no BLE or USB connection is made in a certain time lapse,
 the system goes to deep sleep or power off.
 
 ## About connectivity

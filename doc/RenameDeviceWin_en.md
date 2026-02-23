@@ -1,8 +1,10 @@
 # Changing your device's display name (Windows only) or Hardware ID (BLE only)
 
-Once your BLE simwheel/button box is paired and connected to your host computer,
+Once your BLE sim-wheel/button box is paired
+and connected to your host computer,
 It will be available in the "Game Controllers" control panel.
-However, it will show a generic display name like "4 axis 128 button device with hat switch".
+However, it will show a generic display name like
+"4 axis 128 button device with hat switch".
 
 > [!CAUTION]
 > The following workaround will rename all devices sharing the same hardware ID,
@@ -24,10 +26,12 @@ will do the work for you. See the
 
 3. Inside that folder, locate the subfolder (registry key) for your device.
 
-   Those keys are named using this pattern: "**VID** -hex number- &**PID** -hex number- ",
+   Those keys are named using this pattern:
+    "**VID** -hex number- &**PID** -hex number- ",
    where "VID" means "vendor identifier" and "PID" means "product identifier".
    Together, they are a (plug-and-play) hardware identifier (ID).
-   If your device uses **BLE connectivity** and the default hardware ID set in this project,
+   If your device uses **BLE connectivity**
+   and the default hardware ID set in this project,
    that registry key should be **"VID_1D50&PID_FFFF"**.
 
 4. Double-click (edit) the value "**OEMName**".
@@ -42,15 +46,18 @@ If you need to propagate your custom display name to another user or computer:
 
 This works as a backup measure, too.
 
-## Custom hardware ID (BLE only)
+## Custom hardware ID
 
 If you have two or more BLE devices using firmware from this project,
-**all of them will show the same display name, because they share the same hardware ID**.
-However, there are two (non-exclusive) ways to assign a different hardware ID to each device.
+**all of them will show the same display name,**
+**because they share the same hardware ID**.
+However, there are two (non-exclusive) ways
+to assign a different hardware ID to each device.
 
 ### By means of the companion app
 
-A custom VID or PID can be stored by the firmware in flash memory to be used on the subsequent boot.
+A custom VID or PID can be stored by the firmware
+in flash memory to be used on the subsequent boot.
 Use the [companion app](https://github.com/afpineda/SimWheelESP32Config).
 
 ### In source code
@@ -66,8 +73,11 @@ Use the [companion app](https://github.com/afpineda/SimWheelESP32Config).
 
 - Add two parameters to the right:
   - a non-zero 16 bits number as a custom VID.
+    When having USB connectivity, this custom VID is ignored
+    because Espressif requires you to have an USB-IF license.
   - a non-zero 16 bits number as a custom PID.
-  Numbers 0 and FFFF (hexadecimal) are reserved and must not be used.
+    Espressif allows to set a custom PID in their products.
+  **Numbers 0 and FFFF (hexadecimal) are reserved and must not be used.**
 
 For example, [Setup1.ino](../src/Firmware/Setup1/Setup1.ino) shows:
 
@@ -109,10 +119,9 @@ For example (equivalent to the previous example):
 
 ## USB connectivity
 
-If your device uses USB connectivity, the display name will match your device name,
+If your device uses USB connectivity,
+the display name will match your device name,
 which can be set in your custom firmware using the API call `hid::configure()`.
-Any custom VID/PID will be ignored since USB uses the hardware ID
-licensed to your DevKit's manufacturer.
 
 ## Why all this mess?
 

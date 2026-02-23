@@ -31,17 +31,21 @@
 // Globals
 //-------------------------------------------------------------------
 
+// Note:
+// This variable is extern-referenced in test units.
 uint8_t selectedInput = 0xFF;
 
 //-------------------------------------------------------------------
 
-uint16_t _factoryVID = BLE_VENDOR_ID;
-uint16_t _factoryPID = BLE_PRODUCT_ID;
+static uint16_t _factoryVID = BLE_VENDOR_ID;
+static uint16_t _factoryPID = BLE_PRODUCT_ID;
+static Connectivity _connectivity = Connectivity::USB_BLE;
+
 #define MAX_INPUT_NUMBER 63
 
-std::string _deviceName = "ESP32SimWheel";
-std::string _deviceManufacturer = "Mamandurrio";
-bool _autoPowerOff = true;
+static std::string _deviceName = "ESP32SimWheel";
+static std::string _deviceManufacturer = "Mamandurrio";
+static bool _autoPowerOff = true;
 
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
@@ -68,6 +72,11 @@ void hid::configure(
     _factoryPID = productID;
 }
 
+void hid::connectivity(Connectivity option)
+{
+    _connectivity = option;
+}
+
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 // Internal namespace
@@ -81,13 +90,18 @@ void hid::configure(
 class HidServiceProvider : public HidService
 {
 public:
-    virtual void getCustomHardwareID(uint16_t &customVID, uint16_t &customPID) override
+    virtual void getCustomHardwareID(
+        uint16_t &customVID,
+        uint16_t &customPID) override
     {
         customVID = _customVID;
         customPID = _customPID;
     }
 
-    virtual void setCustomHardwareID(uint16_t customVID, uint16_t customPID, bool save) override
+    virtual void setCustomHardwareID(
+        uint16_t customVID,
+        uint16_t customPID,
+        bool save) override
     {
         _customVID = customVID;
         _customPID = customPID;
@@ -106,11 +120,16 @@ private:
 
 void commonHidStart()
 {
+    if (_connectivity == Connectivity::DUMMY)
+        // No connectivity was explicitly requested
+        return;
+
     uint16_t customVID = 0;
     uint16_t customPID = 0;
     if (internals::hid::supportsCustomHardwareID())
     {
-        if ((_factoryVID == TEST_HARDWARE_ID) && (_factoryPID == TEST_HARDWARE_ID))
+        if ((_factoryVID == TEST_HARDWARE_ID) &&
+            (_factoryPID == TEST_HARDWARE_ID))
         {
             // For testing, do not load the custom hardware ID
             customVID = BLE_VENDOR_ID;
@@ -129,12 +148,15 @@ void commonHidStart()
             }
         }
     }
+
     internals::hid::begin(
         _deviceName,
         _deviceManufacturer,
         _autoPowerOff,
         customVID,
-        customPID);
+        customPID,
+        (_connectivity != Connectivity::BLE),
+        (_connectivity != Connectivity::USB));
 }
 
 //-------------------------------------------------------------------
@@ -155,7 +177,8 @@ uint16_t internals::hid::common::onGetFeature(
     uint8_t *buffer,
     uint16_t len)
 {
-    if ((report_id == RID_FEATURE_CAPABILITIES) && (len >= CAPABILITIES_REPORT_SIZE))
+    if ((report_id == RID_FEATURE_CAPABILITIES) &&
+        (len >= CAPABILITIES_REPORT_SIZE))
     {
         buffer[0] = MAGIC_NUMBER_LOW;
         buffer[1] = MAGIC_NUMBER_HIGH;
@@ -183,10 +206,12 @@ uint16_t internals::hid::common::onGetFeature(
         buffer[6] = (uint8_t)InputService::call::getRotaryPulseWidthMultiplier();
         return CONFIG_REPORT_SIZE;
     }
-    if ((report_id == RID_FEATURE_BUTTONS_MAP) && (len >= BUTTONS_MAP_REPORT_SIZE))
+    if ((report_id == RID_FEATURE_BUTTONS_MAP) &&
+        (len >= BUTTONS_MAP_REPORT_SIZE))
     {
         buffer[0] = selectedInput;
-        if ((selectedInput <= MAX_INPUT_NUMBER) && InputNumber::booked(selectedInput))
+        if ((selectedInput <= MAX_INPUT_NUMBER) &&
+            InputNumber::booked(selectedInput))
         {
             InputMapService::call::getMap(selectedInput, buffer[1], buffer[2]);
         }
@@ -197,13 +222,13 @@ uint16_t internals::hid::common::onGetFeature(
         }
         return BUTTONS_MAP_REPORT_SIZE;
     }
-    if ((report_id == RID_FEATURE_HARDWARE_ID) && (len >= HARDWARE_ID_REPORT_SIZE))
+    if ((report_id == RID_FEATURE_HARDWARE_ID) &&
+        (len >= HARDWARE_ID_REPORT_SIZE))
     {
         buffer[4] = 0;
         buffer[5] = 0;
         if (hid::supportsCustomHardwareID())
         {
-            // BLE
             uint16_t vid, pid;
             HidService::call::getCustomHardwareID(vid, pid);
             if ((vid == 0) && (pid == 0))
@@ -216,7 +241,6 @@ uint16_t internals::hid::common::onGetFeature(
         }
         else
         {
-            // USB
             buffer[0] = 0;
             buffer[1] = 0;
             buffer[2] = 0;
@@ -234,11 +258,14 @@ void internals::hid::common::onSetFeature(
     const uint8_t *buffer,
     uint16_t len)
 {
-    if ((InputHubService::call::getSecurityLock()) || (report_id == RID_FEATURE_CAPABILITIES))
+    if ((InputHubService::call::getSecurityLock()) ||
+        (report_id == RID_FEATURE_CAPABILITIES))
         return;
     if (report_id == RID_FEATURE_CONFIG)
     {
-        if ((len > 0) && (buffer[0] >= (uint8_t)ClutchWorkingMode::CLUTCH) && (buffer[0] <= (uint8_t)ClutchWorkingMode::_MAX_VALUE))
+        if ((len > 0) &&
+            (buffer[0] >= (uint8_t)ClutchWorkingMode::CLUTCH) &&
+            (buffer[0] <= (uint8_t)ClutchWorkingMode::_MAX_VALUE))
         {
             // clutch working mode
             InputHubService::call::setClutchWorkingMode((ClutchWorkingMode)buffer[0]);
@@ -246,25 +273,32 @@ void internals::hid::common::onSetFeature(
         if ((len > 1) && (buffer[1] != 0xff))
         {
             // ALT Buttons working mode
-            AltButtonsWorkingMode cwm = (buffer[1] == 0) ? AltButtonsWorkingMode::Regular : AltButtonsWorkingMode::ALT;
+            AltButtonsWorkingMode cwm =
+                (buffer[1] == 0)
+                    ? AltButtonsWorkingMode::Regular
+                    : AltButtonsWorkingMode::ALT;
             InputHubService::call::setAltButtonsWorkingMode(cwm);
         }
-        if ((len > 2) && (buffer[2] <= CLUTCH_FULL_VALUE)) // && ((uint8_t)buffer[2] >= CLUTCH_NONE_VALUE)
+        if ((len > 2) && (buffer[2] <= CLUTCH_FULL_VALUE))
+        // && ((uint8_t)buffer[2] >= CLUTCH_NONE_VALUE)
         {
             // Bite point
             InputHubService::call::setBitePoint(buffer[2]);
         }
-        if ((len > 3) && (buffer[3] == (uint8_t)SimpleCommand::CMD_AXIS_RECALIBRATE))
+        if ((len > 3) &&
+            (buffer[3] == (uint8_t)SimpleCommand::CMD_AXIS_RECALIBRATE))
         {
             // Force analog axis recalibration
             InputService::call::recalibrateAxes();
         }
-        if ((len > 3) && (buffer[3] == (uint8_t)SimpleCommand::CMD_BATT_RECALIBRATE))
+        if ((len > 3) &&
+            (buffer[3] == (uint8_t)SimpleCommand::CMD_BATT_RECALIBRATE))
         {
             // Restart auto calibration algorithm
             BatteryCalibrationService::call::restartAutoCalibration();
         }
-        if ((len > 3) && (buffer[3] == (uint8_t)SimpleCommand::CMD_RESET_BUTTONS_MAP))
+        if ((len > 3) &&
+            (buffer[3] == (uint8_t)SimpleCommand::CMD_RESET_BUTTONS_MAP))
         {
             // Reset buttons map to factory defaults
             InputMapService::call::resetMap();
@@ -274,34 +308,40 @@ void internals::hid::common::onSetFeature(
             // save settings now
             SaveSetting::notify(UserSetting::ALL);
         }
-        if ((len > 3) && (buffer[3] == (uint8_t)SimpleCommand::CMD_REVERSE_LEFT_AXIS))
+        if ((len > 3) &&
+            (buffer[3] == (uint8_t)SimpleCommand::CMD_REVERSE_LEFT_AXIS))
         {
             // change left axis polarity
             InputService::call::reverseLeftAxis();
         }
-        if ((len > 3) && (buffer[3] == (uint8_t)SimpleCommand::CMD_REVERSE_RIGHT_AXIS))
+        if ((len > 3) &&
+            (buffer[3] == (uint8_t)SimpleCommand::CMD_REVERSE_RIGHT_AXIS))
         {
             // change left axis polarity
             InputService::call::reverseRightAxis();
         }
-        if ((len > 3) && (buffer[3] == (uint8_t)SimpleCommand::CMD_SHOW_PIXELS))
+        if ((len > 3) &&
+            (buffer[3] == (uint8_t)SimpleCommand::CMD_SHOW_PIXELS))
         {
             // Show all pixels at once
             internals::pixels::show();
         }
-        if ((len > 3) && (buffer[3] == (uint8_t)SimpleCommand::CMD_RESET_PIXELS))
+        if ((len > 3) &&
+            (buffer[3] == (uint8_t)SimpleCommand::CMD_RESET_PIXELS))
         {
             // Turn off all pixels
             internals::pixels::reset();
         }
-        if ((len > 4) && (buffer[4] != 0xff))
+        if ((len > 4) &&
+            (buffer[4] != 0xff))
         {
             // Set working mode of DPAD
             DPadWorkingMode mode = (buffer[4] == 0) ? DPadWorkingMode::Regular : DPadWorkingMode::Navigation;
             InputHubService::call::setDPadWorkingMode(mode);
         }
         // Note: byte index 5 is read-only
-        if ((len > 6) && (buffer[6] != 0xff))
+        if ((len > 6) &&
+            (buffer[6] != 0xff))
         {
             // Set a pulse width multiplier for all rotary encoders
             if ((buffer[6] >= (uint8_t)PulseWidthMultiplier::X1) &&
@@ -312,16 +352,19 @@ void internals::hid::common::onSetFeature(
             }
         }
     }
-    else if ((report_id == RID_FEATURE_BUTTONS_MAP) && (len >= BUTTONS_MAP_REPORT_SIZE))
+    else if ((report_id == RID_FEATURE_BUTTONS_MAP) &&
+             (len >= BUTTONS_MAP_REPORT_SIZE))
     {
         if (buffer[0] <= MAX_INPUT_NUMBER)
         {
             selectedInput = buffer[0];
-            if ((buffer[1] <= MAX_INPUT_NUMBER) && (buffer[2] <= MAX_INPUT_NUMBER))
+            if ((buffer[1] <= MAX_INPUT_NUMBER) &&
+                (buffer[2] <= MAX_INPUT_NUMBER))
                 InputMapService::call::setMap(buffer[0], buffer[1], buffer[2]);
         }
     }
-    else if ((report_id == RID_FEATURE_HARDWARE_ID) && (len >= HARDWARE_ID_REPORT_SIZE))
+    else if ((report_id == RID_FEATURE_HARDWARE_ID) &&
+             (len >= HARDWARE_ID_REPORT_SIZE))
     {
         if (hid::supportsCustomHardwareID())
         {
@@ -380,7 +423,8 @@ void internals::hid::common::onOutput(
         if (telemetry::data.ecu.brakeBias > 100)
             telemetry::data.ecu.brakeBias = 100;
     }
-    else if ((report_id == RID_OUTPUT_RACE_CONTROL) && (len >= RACE_CONTROL_REPORT_SIZE))
+    else if ((report_id == RID_OUTPUT_RACE_CONTROL) &&
+             (len >= RACE_CONTROL_REPORT_SIZE))
     {
         telemetry::data.raceControl.blackFlag = buffer[0];
         telemetry::data.raceControl.blueFlag = buffer[1];
@@ -389,22 +433,27 @@ void internals::hid::common::onOutput(
         telemetry::data.raceControl.orangeFlag = buffer[4];
         telemetry::data.raceControl.whiteFlag = buffer[5];
         telemetry::data.raceControl.yellowFlag = buffer[6];
-        telemetry::data.raceControl.remainingLaps = *((uint16_t *)(buffer + 7));
-        telemetry::data.raceControl.remainingMinutes = *((uint16_t *)(buffer + 9));
+        telemetry::data.raceControl.remainingLaps =
+            *((uint16_t *)(buffer + 7));
+        telemetry::data.raceControl.remainingMinutes =
+            *((uint16_t *)(buffer + 9));
     }
     else if ((report_id == RID_OUTPUT_GAUGES) && (len >= GAUGES_REPORT_SIZE))
     {
         telemetry::data.gauges.relativeTurboPressure = buffer[0];
         if (telemetry::data.gauges.relativeTurboPressure > 100)
             telemetry::data.gauges.relativeTurboPressure = 100;
-        telemetry::data.gauges.absoluteTurboPressure = static_cast<float>(*((uint16_t *)(buffer + 1)) / 100.0);
+        telemetry::data.gauges.absoluteTurboPressure =
+            static_cast<float>(*((uint16_t *)(buffer + 1)) / 100.0);
         telemetry::data.gauges.waterTemperature = *((uint16_t *)(buffer + 3));
-        telemetry::data.gauges.oilPressure = static_cast<float>(*((uint16_t *)(buffer + 5)) / 100.0);
+        telemetry::data.gauges.oilPressure =
+            static_cast<float>(*((uint16_t *)(buffer + 5)) / 100.0);
         telemetry::data.gauges.oilTemperature = *((uint16_t *)(buffer + 7));
         telemetry::data.gauges.relativeRemainingFuel = buffer[9];
         if (telemetry::data.gauges.relativeRemainingFuel > 100)
             telemetry::data.gauges.relativeRemainingFuel = 100;
-        telemetry::data.gauges.absoluteRemainingFuel = *((uint16_t *)(buffer + 10));
+        telemetry::data.gauges.absoluteRemainingFuel =
+            *((uint16_t *)(buffer + 10));
     }
     else if ((report_id == RID_OUTPUT_PIXEL) && (len >= PIXEL_REPORT_SIZE))
     {

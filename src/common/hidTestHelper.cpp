@@ -316,6 +316,13 @@ void setup()
     PowerService::inject(&powerMock);
     OnConnected::subscribe(onConnectedCallback);
     OnDisconnected::subscribe(onDisconnectedCallback);
+#if BLE_ONLY
+    hid::connectivity(Connectivity::BLE);
+#elif USB_ONLY
+    hid::connectivity(Connectivity::USB);
+#else
+    hid::connectivity(Connectivity::USB_BLE);
+#endif
     hid::configure(
         HID_TESTER,
         "Mamandurrio",

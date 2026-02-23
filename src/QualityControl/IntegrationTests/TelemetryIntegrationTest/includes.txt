@@ -1,5 +1,5 @@
 hidCommon.cpp
-hid_BLE.cpp
+hid_USB_BLE.cpp
 telemetry.cpp
 ui.cpp
 pixels_dummy.cpp

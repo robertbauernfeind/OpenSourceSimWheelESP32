@@ -378,8 +378,14 @@ void internals::hid::begin(
     std::string deviceManufacturer,
     bool enableAutoPowerOff,
     uint16_t vendorID,
-    uint16_t productID)
+    uint16_t productID,
+    bool usb_enable,
+    bool ble_enable)
 {
+    if (!usb_enable && !ble_enable)
+        // dummy connectivity
+        return;
+
     if (hidDevice == nullptr)
     {
         // Auto-power-off initialization

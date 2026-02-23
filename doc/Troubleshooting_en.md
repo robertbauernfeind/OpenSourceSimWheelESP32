@@ -169,6 +169,12 @@ When troubleshooting I2C error messages,
 the [I2C probe](../src/Firmware/I2C_probe/I2C_probe.ino) firmware
 will be handy.
 
+- *There is no HID connectivity*:
+
+  You chose a connectivity option that discards the supported connectivity
+  (except for `Connectivity::DUMMY`) in your board.
+  Choose a connectivity option supported by your board.
+
 The following error messages are self-describing:
 
 - *You can not assign the same input number for the left and right clutch paddles*
