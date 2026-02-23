@@ -74,3 +74,10 @@ if any source file is modified inside folders
 > all copies are set to *read-only*.
 > Otherwise, you could be editing the wrong files,
 > which is quite confusing.
+
+## Troubleshooting
+
+Look for error messages when running this procedure.
+If you have them, edit the involved "includes.txt" file.
+Probably, some files has been renamed or removed from the project.
+Check the [release notes](../changelog.md).
