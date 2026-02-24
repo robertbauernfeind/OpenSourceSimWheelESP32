@@ -267,7 +267,6 @@ uint16_t byteswap(uint16_t value)
 class BleConnectionStatus : public BLEServerCallbacks
 {
 public:
-    BleConnectionStatus(void) {};
     bool connected = false;
     void onConnect(BLEServer *pServer) override
     {
@@ -414,7 +413,7 @@ void new_connection_state(uint8_t new_state)
 #if CONFIG_NIMBLE_ENABLED
         BLEAdvertising::start();
 #elif CONFIG_BLUEDROID_ENABLED
-        connectionStatus.onDisconnect(pServer); // start advertising
+        BLEDevice::startAdvertising();
 #endif
         if (autoPowerOffTimer != nullptr)
             esp_timer_start_once(
@@ -639,8 +638,6 @@ void internals::hid::begin(
         defaultBatteryStatus.stateOfCharge = 100;
         defaultBatteryStatus.usingExternalPower = true;
         internals::hid::reportBatteryLevel(defaultBatteryStatus);
-
-        connectionStatus.onDisconnect(pServer); // start advertising
     }
 
 #endif // CONFIG_NIMBLE_ENABLED
