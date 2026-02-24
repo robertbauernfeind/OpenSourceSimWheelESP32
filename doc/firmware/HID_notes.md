@@ -338,15 +338,16 @@ Changes will be available after a reset or power-off.
 
 At read:
 
-- *USB devices*: zero is read at both fields.
-- *BLE devices*: The PID and VID configured for the subsequent reboot will be retrieved.
+The VID and PID configured for the subsequent reboot will be retrieved.
+Note that the custom VID will be ignored in boards having USB-OTG,
+unless BLE-only connectivity is hard coded.
 
 At write (unless locked):
 
-- *USB devices*: both fields are ignored.
-- *BLE devices*:
-  - If both VID and PID are set to 0000, the hardware ID will return to factory defaults after the next reboot.
-  - Otherwise, the device will save the given VID and PID in flash memory and use them after the next reboot.
+- If both VID and PID are set to 0000,
+  the hardware ID will return to factory defaults after the next reboot.
+- Otherwise, the device will save the given VID and PID in flash memory
+  and use them after the next reboot.
 
 ### Control code
 

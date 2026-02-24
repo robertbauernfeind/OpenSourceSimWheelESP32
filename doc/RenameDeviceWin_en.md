@@ -19,7 +19,8 @@ will do the work for you. See the
 
 ## Custom display name by means of the Windows registry editor (Windows only)
 
-1. Open the **"registry editor"** (regedit.exe) **with user privileges** (not administrator).
+1. Open the **"registry editor"** (regedit.exe) **with user privileges**
+   (not administrator).
 2. Navigate to the following folder (registry key):
 
    > KEY_CURRENT_USER\System\CurrentControlSet\Control\MediaProperties\PrivateProperties\Joystick\OEM
@@ -54,6 +55,10 @@ If you have two or more BLE devices using firmware from this project,
 However, there are two (non-exclusive) ways
 to assign a different hardware ID to each device.
 
+> When using USB connectivity, the custom VID is ignored
+> to minimize the chance of the host PC loading the wrong drivers,
+> which could be disastrous.
+
 ### By means of the companion app
 
 A custom VID or PID can be stored by the firmware
@@ -73,10 +78,8 @@ Use the [companion app](https://github.com/afpineda/SimWheelESP32Config).
 
 - Add two parameters to the right:
   - a non-zero 16 bits number as a custom VID.
-    When having USB connectivity, this custom VID is ignored
-    because Espressif requires you to have an USB-IF license.
   - a non-zero 16 bits number as a custom PID.
-    Espressif allows to set a custom PID in their products.
+
   **Numbers 0 and FFFF (hexadecimal) are reserved and must not be used.**
 
 For example, [Setup1.ino](../src/Firmware/Setup1/Setup1.ino) shows:
