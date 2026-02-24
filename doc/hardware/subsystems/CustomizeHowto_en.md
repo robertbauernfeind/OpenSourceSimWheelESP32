@@ -320,12 +320,14 @@ This project provides several connectivity choices:
 
 Combined USB and BLE connectivity is the default:
 
-- Silently ignores USB connectivity if USB-OTG is not supported
-  by your board.
-- USB connectivity takes precedence over BLE connectivity.
-  Switching from one to the other is automatic.
-- When switching connectivity, the device will briefly disconnect.
-- Your simulator may detect each connectivity option as a different device
+- The firmware silently ignores USB connectivity if USB-OTG is not available,
+  so it works with all boards.
+- The interface connected first has priority and will not be forced
+  to disconnect. This should prevent your simulator from going crazy.
+- The firmware will silently fall back to the next available interface
+  when the first is disconnected.
+- BLE discovery will take place even if there is an USB connection.
+- Your simulator may detect each interface as a different device
   despite having the same VID, PID and serial number.
 
 To choose a connectivity option,
