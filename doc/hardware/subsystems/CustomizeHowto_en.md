@@ -348,7 +348,7 @@ static Connectivity connectivity_choice = Connectivity::USB_BLE;
 ```
 
 > [!TIP]
-> See ["Changing your device's display name (Windows only) or Hardware ID"](./RenameDeviceWin_en.md)
+> See ["Changing your device's display name (Windows only) or Hardware ID"](../../RenameDeviceWin_en.md)
 > for additional customization regarding connectivity.
 
 #### BLE Connectivity using h2zero's wrapper
