@@ -572,7 +572,6 @@ namespace hid
      *                 Ignored in the USB implementation.
      * @param productID Factory PID. Set to zero to use a default product ID.
      *                  Value 0xFFFF is reserved for testing.
-     * @param connectivity Connectivity choice
      */
     void configure(
         std::string deviceName,

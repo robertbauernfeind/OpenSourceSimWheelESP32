@@ -45,12 +45,12 @@ Please refer to the following documentation for more details:
   | sr8_pin_t                | SR8Pin                 |
   | telemetryData_t          | TelemetryData          |
 
-  - *Note 1:*
-
-    GPIO arrays has been substituted by specialized types:
-    `GPIOCollection`, `InputGPIOCollection` and `OutputGPIOCollection`.
-    There is no need to declare variables of these types
-    as you can initialize them using GPIO numbers between braces.
+  > *Note 1:*
+  >
+  > GPIO arrays has been substituted by specialized types:
+  > `GPIOCollection`, `InputGPIOCollection` and `OutputGPIOCollection`.
+  > There is no need to declare variables of these types
+  > as you can initialize them using GPIO numbers between braces.
 
 - The telemetry display using RGB LED strips has been **removed**
   as pixel control is a better option.

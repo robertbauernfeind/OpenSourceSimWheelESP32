@@ -898,6 +898,7 @@ enum class PowerLatchMode : uint8_t
 // Connectivity
 //-------------------------------------------------------------------
 
+/// @brief Connectivity choice
 enum class Connectivity : uint8_t
 {
     /// @brief Combined USB and BLE connectivity if available
