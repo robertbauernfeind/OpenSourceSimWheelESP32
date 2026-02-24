@@ -12,6 +12,7 @@
 
 #include "USB.h"
 #include "USBHID.h"
+#include "USBCDC.h"
 #include "NimBLEWrapper.hpp"
 
 #include "SimWheel.hpp"
@@ -28,7 +29,9 @@
 // ----------------------------------------------------------------------------
 
 // Related to available connectivity
-#if SOC_USB_OTG_SUPPORTED && CONFIG_TINYUSB_ENABLED
+#if SOC_USB_OTG_SUPPORTED && CONFIG_TINYUSB_ENABLED && !USB_SERIAL_IS_DEFINED
+// Note: If USB_SERIAL_IS_DEFINED, the PC shows a "driver error",
+// so we disable USB HID in this case.
 #define USB_AVAILABLE 1
 #else
 #define USB_AVAILABLE 0
