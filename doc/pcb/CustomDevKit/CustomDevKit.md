@@ -17,7 +17,8 @@
   - Supports **safe** battery charging and discharging simultaneously.
     This also enhances battery life.
   - Automatically switches from external power to battery.
-  - The charging current is automatically adapted to the state of charge with priority to the ESP32.
+  - The charging current is automatically adapted
+    to the state of charge with priority to the ESP32.
     The maximum charging current is 300 mA.
   - LiPo and Li-ion chemistries.
 
@@ -131,10 +132,12 @@ Please, operate the VLED switch while there is no power supply.
 
 Use `GND` as a common pole for all switches and rotary encoders.
 There are more than enough `GND` pads available on the board.
-However, you can also chain `GND` from one switch (or rotary encoder) to the next.
+However, you can also chain `GND` from one switch
+(or rotary encoder) to the next.
 
 There are two `3V3` pads available to power other devices,
-but note that the maximum current the board can deliver is 1A to the whole system.
+but note that the maximum current the board can deliver
+is 1A to the whole system.
 
 The `Charging` pad works in open-drain mode and is active LOW.
 You can attach a LED witness via a 1K-ohm resistor in this way:
@@ -154,7 +157,8 @@ The pin out is printed on the back of the board:
 
 ## System shutdown
 
-It is recommended to attach a non-momentary switch to one pole of the battery to shutdown the system.
+It is recommended to attach a non-momentary
+switch to one pole of the battery to shutdown the system.
 The firmware is also able to enter *deep sleep* mode as a shutdown option.
 It will deplete the battery but at a very slow rate.
 To wake up the system you can configure one of the RTC pins
@@ -227,8 +231,8 @@ Take this information into account when ordering:
 - 4 layers (Signal/power + GND + GND + Signal/power).
 - Pin headers are **not included** in the bill of materials (BOM) on purpose.
   You can safely ignore any error message regarding them.
-  Direct wire soldering is a better option than pin headers for the intended application,
-  but you can choose to mount them:
+  Direct wire soldering is a better option than pin headers
+  for the intended application, but you can choose to mount them:
   open in *EasyEDA PRO*,
   select each pin header and change the property `Add into BOM` to `true`.
 - If you choose to include the pin headers in the BOM,
@@ -255,34 +259,16 @@ Take this information into account when ordering:
 
 Arduino's sketch named
 [**CustomDevKitFirmware**](../../../src/Firmware/CustomDevKitFirmware/CustomDevKitFirmware.ino)
-is the place where you build your own firmware by modifying a few specific lines of code.
-You may want to make a copy first to prevent your customized code from being deleted after updating.
+is the place where you build your own firmware
+by modifying a few specific lines of code.
+You may want to make a copy first to prevent your customized code
+from being deleted after updating.
 To make a working copy:
 
 - Copy the entire folder under a different name.
   Place that copy in the `src/Firmware` folder.
-- Make sure that both the folder and the ".ino" file inside it have exactly the same name.
-
-To choose a **connectivity** option:
-
-- Edit the file **"includes.txt"** at your sketch folder.
-  Replace the file name in this table with another from
-  the same table.
-
-  | Connectivity | Stack            | Wrapper                 | *Filename*      |
-  | ------------ | ---------------- | ----------------------- | --------------- |
-  | BLE          | NimBLE/Bluedroid | none/ESP32-Arduino core | hid_BLE.cpp     |
-  | BLE          | NimBLE           | h2zero/NimBLE-Arduino   | hid_h2zero.cpp  |
-  | USB          | TinyUSB          | ESP32-Arduino           | hid_USB.cpp     |
-  | USB+BLE      | TinyUSB & NimBLE | core & none             | hid_USB_BLE.cpp |
-  | Dummy        | none             | none                    | hid_dummy.cpp   |
-
-  Those file names are case-sensitive.
-
-- Do not confuse those with "hidCommon.cpp".
-  Do not touch that line.
-- Run the [sources setup procedure](../../firmware/sourcesSetup_en.md) again.
-  **This is mandatory**.
+- Make sure that both the folder and the ".ino"
+  file inside it have exactly the same name.
 
 There a few things to customize as noted in the sketch file:
 
@@ -360,26 +346,35 @@ See the
 ## Firmware uploading
 
 No PC driver needs to be installed.
-Your board **must** enter *bootloader mode* for the serial port to become available
+Your board **must** enter *bootloader mode*
+for the serial port to become available
 and Arduino IDE recognizing the board.
 To enter *bootloader mode*, press and hold `BOOT`,
 then press and release `RESET`, then release `BOOT`.
 
 In Arduino IDE, configure your board in this way ("Tools" menu):
 
-- Having **BLE connectivity**:
+- *Board*: ESP32S3 Dev Module (esp32).
+- *USB-Mode*: "USB-OTG".
+- *USB CDC on Boot*: "Disabled".
+- *Upload mode*: USB-OTG CDC (TinyUSB).
 
-  - *Board*: ESP32S3 Dev Module (esp32).
-  - *USB CDC on Boot*: "Enabled".
-  - *Upload mode*: USB-OTG CDC (TinyUSB).
+> [!IMPORTANT]
+> **You must click on the `Reset` button after uploading**.
 
-- Having **USB connectivity**:
+### Arduino IDE settings for troubleshooting
 
-  - *Board*: ESP32S3 Dev Module (esp32).
-  - *USB CDC on Boot*: **"Disabled"**.
-  - *Upload mode*: USB-OTG CDC (TinyUSB).
+The previous Arduino IDE options do **not** enable the USB serial output
+for troubleshooting in the serial monitor.
+If you need the serial monitor, use the following options:
 
-**You must click on the `Reset` button after uploading**.
+- *Board*: ESP32S3 Dev Module (esp32).
+- *USB-Mode*: "USB-OTG".
+- *USB CDC on Boot*: **"Enabled"**.
+- *Upload mode*: USB-OTG CDC (TinyUSB).
+
+But **USB HID connectivity will be disabled** in this case
+(there is BLE connectivity only).
 
 ## Hardware revisions
 

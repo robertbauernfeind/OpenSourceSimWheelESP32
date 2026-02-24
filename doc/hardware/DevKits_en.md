@@ -287,10 +287,26 @@ I can not say if that is true.
 See [Expressif's documentation on "Select Bootloader Mode"](https://docs.espressif.com/projects/esptool/en/latest/esp32/advanced-topics/boot-mode-selection.html)
 for further information.
 
-### Troubleshooting firmware bugs
+## Troubleshooting firmware bugs
 
 If you go for a custom firmware and it does not work,
 your only chance to know what is happening
 is the *serial monitor* at Arduino IDE.
 
 Check the guide on [troubleshooting](../Troubleshooting_en.md).
+
+### USB-OTG and the serial monitor
+
+For DevKit boards having an USB-OTG port (like the ESP32-S3)
+console output is incompatible with USB HID in such a port:
+
+| USB Mode     | USB CDC on Boot | HID connectivity | Serial output |
+| ------------ | --------------- | ---------------- | ------------- |
+| Hardware CDC | Disabled        | yes              | no            |
+| Hardware CDC | Enabled         | yes              | no            |
+| USB-OTG      | Disabled        | yes              | no            |
+| USB-OTG      | Enabled         | no               | yes           |
+
+In the last case,
+the firmware disables USB connectivity to have USB CDC serial output,
+thus only BLE HID connectivity will work.

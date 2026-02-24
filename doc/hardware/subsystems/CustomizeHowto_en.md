@@ -305,6 +305,12 @@ This project provides several connectivity choices:
 
 - Universal Serial Bus (USB).
 
+  > [!WARNING]
+  > For this to work you must **NOT** configure
+  > *USB mode* to "USB-OTG (TinyUSB)" and
+  > *USB CDC On Boot* to "Enabled"
+  > in Arduino IDE (*Tools* menu).
+
 - "Dummy" connectivity, available for troubleshooting.
   This option provides no connectivity at all.
   Switch to this temporarily if your firmware won't boot and
@@ -314,31 +320,36 @@ This project provides several connectivity choices:
 
 Combined USB and BLE connectivity is the default:
 
-- Transparently ignores USB connectivity if USB-OTG is not supported
+- Silently ignores USB connectivity if USB-OTG is not supported
   by your board.
 - USB connectivity takes precedence over BLE connectivity.
   Switching from one to the other is automatic.
 - When switching connectivity, the device will briefly disconnect.
 - Your simulator may detect each connectivity option as a different device
   despite having the same VID, PID and serial number.
-- Automatic shutdown is available.
 
-To choose a connectivity option:
+To choose a connectivity option,
+locate the following lines in your copy of `CustomSetup.ino`:
 
-- Locate the following lines in your copy of `CustomSetup.ino`:
+```c++
+static Connectivity connectivity_choice = Connectivity::USB_BLE;
+static Connectivity connectivity_choice = Connectivity::USB;
+static Connectivity connectivity_choice = Connectivity::BLE;
+static Connectivity connectivity_choice = Connectivity::DUMMY;
+```
 
-  ```c++
-  static Connectivity connectivity_choice = Connectivity::USB_BLE;
-  static Connectivity connectivity_choice = Connectivity::USB;
-  static Connectivity connectivity_choice = Connectivity::BLE;
-  static Connectivity connectivity_choice = Connectivity::DUMMY;
-  ```
+Comment out all of them except for your choice. For example:
 
-Comment out all of them except for your choice.
+```c++
+static Connectivity connectivity_choice = Connectivity::USB_BLE;
+// static Connectivity connectivity_choice = Connectivity::USB;
+// static Connectivity connectivity_choice = Connectivity::BLE;
+// static Connectivity connectivity_choice = Connectivity::DUMMY;
+```
 
 > [!TIP]
 > See ["Changing your device's display name (Windows only) or Hardware ID"](./RenameDeviceWin_en.md)
-> for additional customization options regarding connectivity.
+> for additional customization regarding connectivity.
 
 #### BLE Connectivity using h2zero's wrapper
 
@@ -349,7 +360,11 @@ You must install the
 library in this case.
 This choice will be removed after *ESP32-Arduino*
 version 4.0.0 is released.
-Simultaneous USB connectivity does not work within this choice.
+USB connectivity does not work within this choice.
+
+> [!NOTE]
+> This option is intended as a workaround for "pure" ESP32 boards
+> having issues with BLE connectivity.
 
 In order to use this:
 
@@ -363,17 +378,6 @@ In order to use this:
   Do not touch that line.
 - Run the [sources setup procedure](../../firmware/sourcesSetup_en.md) again.
   **This is mandatory**.
-
-If you go for a purely wired USB implementation:
-
-- Set *USB-Mode* to "USB-OTG (TinyUSB)" in Arduino-IDE (board configuration).
-- This implementation **won't work**
-  if you set *USB-Mode* to "Hardware CDC and JTAG"
-  and *USB CDC on Boot* to "Enabled".
-  However, this is the only way to redirect
-  serial output to the USB serial interface.
-  Use this configuration if you need to see error messages and
-  your board doesn't have a secondary USB-to-UART connector.
 
 ### Security lock
 

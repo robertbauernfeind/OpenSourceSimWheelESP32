@@ -13,10 +13,10 @@ however, a different sketch may be needed:
 - To test the BLE implementation based on h2zero's wrapper (NimBLE):
   [h2zeroImplTest.ino](./h2zeroImplTest/h2zeroImplTest.ino)
 
-- To test the BLE implementation (only) on boards not having USB-TO-UART port:
+- To test BLE-only connectivity on boards not having USB-TO-UART port:
   [BLEimplTest.ino](./BLEimplTest/BLEimplTest.ino)
 
-- To test the USB implementation (only) on boards not having USB-TO-UART port,
+- To test USB-only connectivity on boards not having USB-TO-UART port,
   but having USB-OTG support:
   [USBImplTest.ino](./USBImplTest/USBImplTest.ino)
 
@@ -30,12 +30,37 @@ however, a different sketch may be needed:
 
 ## Hardware setup
 
-- BLE implementations: nothing required, except for an
+- BLE connectivity: nothing required, except for an
   external antenna on some devices.
-- USB implementation: a board with USB-OTG support is required
+- USB connectivity: a board with USB-OTG support is required
   (LillyGo T-QT and ESP32S3-DevKit-C were tested).
 
 Output through USB serial port at 115200 bauds.
+
+## Arduino IDE setup
+
+Press the `reset` button while holding the `Boot` (or `IO0`) button
+to enter *bootloader mode*.
+
+If your board has an USB-TO-UART port, use it for console output
+and ignore the rest of this section.
+
+If your board does not have USB-TO-UART port:
+
+> [!IMPORTANT]
+> You can not have USB serial output and USB HID at the same time,
+> so you this procedure will be limited when testing USB connectivity.
+
+- To test USB connectivity you will be "blind",
+  configure Arduino IDE in this way:
+
+  - *USB mode*: USB-OTG (TinyUSB).
+  - *USB CDC On Boot*: disabled.
+
+- To test BLE connectivity, configure Arduino IDE in this way:
+
+  - *USB mode*: USB-OTG (TinyUSB).
+  - *USB CDC On Boot*: enabled.
 
 ## Software setup
 
@@ -54,27 +79,14 @@ Smartphone (BLE implementation only):
 
 - nRF Connect application (Android/iOS).
 
-## Specific notes for the USB implementation
-
-In LillyGo T-QT, press the `reset` button while holding the `IO0` button
-to enter *bootloader mode*.
-
-Use this board configuration in Arduino IDE:
-
-- Board: "ESP32S3 Dev Module (esp32)" (or your actual board brand).
-- USB-Mode:
-  - DevKit with just one USB port: "USB-OTG (TinyUSB)".
-  - DevKit with two USB ports: "Hardware CDC and JTAG".
-- USB CDC On Boot: Disabled.
-
-## Specific notes for the BLE implementation
+## Specific notes for testing BLE connectivity
 
 - If the device is paired because of a previous test,
   unpair it first (delete from the Bluetooth control panel).
 - Before pairing, wait for the `*** DISCOVERING ***`
   notification at the serial monitor.
-- It will be shown as "NimBLEimplTest", "ESPBLEimplTest" or "ESPBLEimplTest"
-  (depending on which implementation is being tested).
+- It will be shown as "h2zeroImplTest", "BLEimplTest", USBimplTest" or
+  "CombinedHIDImplTest" (depending on the test sketch).
 
 ## Procedure and expected output
 
