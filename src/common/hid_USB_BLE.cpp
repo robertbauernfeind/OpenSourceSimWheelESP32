@@ -83,10 +83,15 @@ void autoPowerOffCallback(void *unused)
 
 #if USB_AVAILABLE
 
-// We create a new USB instance as the default stack size is not enough
 USBHID usbHid;
-ESPUSB USB_instance(4096);
-#define USB USB_instance
+// DEVELOPER NOTE:
+// The logging API consumes A LOT of stack space.
+// Do not set Core Debug Level to anything beyond "Error",
+// otherwise a stack overflow will happen in the USB task.
+// You may uncomment the following workaround for testing,
+// but it takes too much memory for a production release.
+// ESPUSB USB_instance(8192);
+// #define USB USB_instance
 
 class SimWheelUsbHid : public USBHIDDevice
 {
@@ -266,22 +271,14 @@ public:
     bool connected = false;
     void onConnect(BLEServer *pServer) override
     {
-        if (autoPowerOffTimer != nullptr)
-            esp_timer_stop(autoPowerOffTimer);
-        internals::hid::reset();
         connected = true;
-        OnConnected::notify();
+        new_connection_state(STATE_BLE_CONNECTED);
     };
 
     void onDisconnect(BLEServer *pServer) override
     {
         connected = false;
-        BLEDevice::startAdvertising();
-        OnDisconnected::notify();
-        if (autoPowerOffTimer != nullptr)
-            esp_timer_start_once(
-                autoPowerOffTimer,
-                AUTO_POWER_OFF_DELAY_SECS * 1000000);
+        new_connection_state(STATE_NOT_CONNECTED);
     };
 
 } connectionStatus;
@@ -409,6 +406,7 @@ void new_connection_state(uint8_t new_state)
 {
     switch (new_state)
     {
+    // = = = = = = = = = = = = = = =
     case STATE_NOT_CONNECTED:
     {
         connection_state = STATE_NOT_CONNECTED;
@@ -424,18 +422,28 @@ void new_connection_state(uint8_t new_state)
                 AUTO_POWER_OFF_DELAY_SECS * 1000000);
     }
     break;
+    // = = = = = = = = = = = = = = =
     case STATE_BLE_CONNECTED:
     {
         if (autoPowerOffTimer != nullptr)
             esp_timer_stop(autoPowerOffTimer);
+        bool previously_disconnected =
+            (connection_state == STATE_NOT_CONNECTED);
         connection_state = STATE_BLE_CONNECTED;
+        // IMPORTANT NOTE:
+        // DO NOT send an input report from here.
+        // This is a callback in the BLE task.
+        // It will cause the host to stop receiving input.
         OnConnected::notify();
     }
     break;
+    // = = = = = = = = = = = = = = =
     case STATE_USB_CONNECTED:
     {
         if (autoPowerOffTimer != nullptr)
             esp_timer_stop(autoPowerOffTimer);
+        if (connection_state != STATE_NOT_CONNECTED)
+            OnDisconnected::notify();
         // Disable BLE connectivity
         connection_state = STATE_USB_CONNECTED;
 #if CONFIG_NIMBLE_ENABLED
@@ -448,6 +456,13 @@ void new_connection_state(uint8_t new_state)
         std::map<uint16_t, conn_status_t> devices = pServer->getPeerDevices(false);
         for (auto device : devices)
             pServer->disconnect(device.first);
+#endif
+#if USB_AVAILABLE
+        // Send the latest input report
+        usbHid.SendReport(
+            RID_INPUT_GAMEPAD,
+            inputReportData,
+            GAMEPAD_REPORT_SIZE);
 #endif
         OnConnected::notify();
     }
