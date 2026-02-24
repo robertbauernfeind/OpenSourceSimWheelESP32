@@ -427,8 +427,6 @@ void new_connection_state(uint8_t new_state)
     {
         if (autoPowerOffTimer != nullptr)
             esp_timer_stop(autoPowerOffTimer);
-        bool previously_disconnected =
-            (connection_state == STATE_NOT_CONNECTED);
         connection_state = STATE_BLE_CONNECTED;
         // IMPORTANT NOTE:
         // DO NOT send an input report from here.
