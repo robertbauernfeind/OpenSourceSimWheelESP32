@@ -134,7 +134,8 @@ void internals::hid::begin(
     uint16_t vendorID,
     uint16_t productID,
     bool usb_enable,
-    bool ble_enable) {}
+    bool ble_enable,
+    bool exclusive) {}
 
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------

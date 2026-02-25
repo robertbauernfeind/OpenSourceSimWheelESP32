@@ -336,8 +336,9 @@ void setup()
         debugPrintf("Actual VID / PID depends on DevKit (not BLE)\n");
     else
         debugPrintf(
-            "Actual VID / PID: %04x / %04x\n",
+            "Actual VID / PID: %04x / %04x ..OR.. 303A / %04x",
             BLE_VENDOR_ID,
+            BLE_PRODUCT_ID,
             BLE_PRODUCT_ID);
     debugPrintf("--GO--\n");
 }
