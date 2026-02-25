@@ -6,8 +6,9 @@
   connectivity option: `Connectivity::BLE`, `Connectivity::USB`,
   `Connectivity::DUMMY` (none), `Connectivity::USB_BLE` (combined) or
   `Connectivity::USB_BLE_EXCLUSIVE`
-  (combined but with forced BLE disconnection).
+  (combined but with forced BLE connection drops).
   No need to mess with `includes.txt` anymore (in most cases).
+  The default is `Connectivity::USB_BLE`.
 - Please, read again the *Connectivity* section in
   [CustomizeHowto_en.md](./hardware/subsystems/CustomizeHowto_en.md#connectivity)
   for instructions.
@@ -20,6 +21,7 @@
   If your custom `includes.txt` file does not work,
   copy-paste the one from [CustomSetup](../src/Firmware/CustomSetup/includes.txt).
   It should work with all firmwares.
+- There is a new test unit for connectivity options (non-automated).
 
 ## 7.8.3
 
