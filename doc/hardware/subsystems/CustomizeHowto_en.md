@@ -318,23 +318,12 @@ This project provides several connectivity choices:
   This is the case when using USB connectivity on a DevKit board
   with only one USB header.
 
-Combined USB and BLE connectivity is the default:
-
-- The firmware silently ignores USB connectivity if USB-OTG is not available,
-  so it works with all boards.
-- The interface connected first has priority and will not be forced
-  to disconnect. This should prevent your simulator from going crazy.
-- The firmware will silently fall back to the next available interface
-  when the first is disconnected.
-- BLE discovery will take place even if there is an USB connection.
-- Your simulator may detect each interface as a different device
-  despite having the same VID, PID and serial number.
-
 To choose a connectivity option,
 locate the following lines in your copy of `CustomSetup.ino`:
 
 ```c++
 static Connectivity connectivity_choice = Connectivity::USB_BLE;
+static Connectivity connectivity_choice = Connectivity::USB_BLE_EXCLUSIVE;
 static Connectivity connectivity_choice = Connectivity::USB;
 static Connectivity connectivity_choice = Connectivity::BLE;
 static Connectivity connectivity_choice = Connectivity::DUMMY;
@@ -344,10 +333,44 @@ Comment out all of them except for your choice. For example:
 
 ```c++
 static Connectivity connectivity_choice = Connectivity::USB_BLE;
+// static Connectivity connectivity_choice = Connectivity::USB_BLE_EXCLUSIVE;
 // static Connectivity connectivity_choice = Connectivity::USB;
 // static Connectivity connectivity_choice = Connectivity::BLE;
 // static Connectivity connectivity_choice = Connectivity::DUMMY;
 ```
+
+#### Connectivity options explained
+
+- `Connectivity::DUMMY`: no connectivity (for troubleshooting).
+- `Connectivity::BLE`: BLE-only.
+- `Connectivity::USB`: USB-only.
+  If your device does not support USB-OTG, it won't boot.
+
+- `Connectivity::USB_BLE`: combined BLE and USB.
+  This is the default and recommended option.
+
+  - The firmware silently ignores USB connectivity if USB-OTG is not available,
+    so it works with all boards.
+  - Your simulator may detect each interface as a different device
+    despite having the same VID, PID and serial number.
+  - The interface connected first has priority and will not be forced
+    to disconnect:
+
+    - This should prevent your simulator from going crazy
+      when the USB cable is plugged in.
+    - If your next-door neighbor connects to your device via BLE,
+      they won't hijack it (as long as you keep the USB cable plugged in).
+
+  - The firmware will silently fall back to the second connected interface
+    when the first is disconnected.
+  - BLE discovery will take place even if there is an USB connection.
+
+- `Connectivity::USB_BLE_EXCLUSIVE`: combined BLE and USB.
+  The same as the previous option but...
+
+  - USB has priority over BLE.
+  - BLE discovery is disabled if there is an USB connection.
+  - BLE is forcedly disconnected when an USB connection takes place.
 
 > [!TIP]
 > See ["Changing your device's display name (Windows only) or Hardware ID"](../../RenameDeviceWin_en.md)

@@ -4,23 +4,22 @@
 
 - A new API call, `hid::connectivity()`, allows you to choose a
   connectivity option: `Connectivity::BLE`, `Connectivity::USB`,
-  `Connectivity::USB_BLE` (combined) or `Connectivity::DUMMY` (none).
-  No need to mess with `includes.txt` in most cases.
+  `Connectivity::DUMMY` (none), `Connectivity::USB_BLE` (combined) or
+  `Connectivity::USB_BLE_EXCLUSIVE`
+  (combined but with forced BLE disconnection).
+  No need to mess with `includes.txt` anymore (in most cases).
+- Please, read again the *Connectivity* section in
+  [CustomizeHowto_en.md](./hardware/subsystems/CustomizeHowto_en.md#connectivity)
+  for instructions.
 - Automatic shutdown now works with USB-only connectivity too.
 - Now a custom PID can be set when using USB connectivity,
   but the custom VID will be ignored (as before).
 - The files `hid_BLE.cpp` and `hid_USB.cpp` have been removed as
   `hid_USB_BLE.cpp` substitutes them.
-- You have to run the sources setup procedure again.
-- Changes to combined BLE and USB connectivity:
-
-  - The firmware silently ignores USB connectivity if USB-OTG is not available,
-    so it works with all boards.
-  - The interface connected first has priority and will not be forced
-    to disconnect. This should prevent your simulator from going crazy.
-  - The firmware will silently fall back to the next available interface
-    when the first is disconnected.
-  - BLE discovery will take place even if there is an USB connection.
+- You have to **run the sources setup procedure again**.
+  If your custom `includes.txt` file does not work,
+  copy-paste the one from [CustomSetup](../src/Firmware/CustomSetup/includes.txt).
+  It should work with all firmwares.
 
 ## 7.8.3
 

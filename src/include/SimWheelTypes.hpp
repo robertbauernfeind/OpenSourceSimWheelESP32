@@ -904,6 +904,8 @@ enum class Connectivity : uint8_t
     /// @brief Combined USB and BLE connectivity if available
     /// @note This is the default
     USB_BLE = 0,
+    /// @brief Combined USB and BLE connectivity with forced connection drop
+    USB_BLE_EXCLUSIVE,
     /// @brief USB connectivity only, if available
     USB,
     /// @brief BLE connectivity only, if available

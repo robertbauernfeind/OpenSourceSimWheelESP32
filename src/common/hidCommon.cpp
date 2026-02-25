@@ -156,7 +156,8 @@ void commonHidStart()
         customVID,
         customPID,
         (_connectivity != Connectivity::BLE),
-        (_connectivity != Connectivity::USB));
+        (_connectivity != Connectivity::USB),
+        (_connectivity == Connectivity::USB_BLE_EXCLUSIVE));
 }
 
 //-------------------------------------------------------------------

@@ -281,6 +281,8 @@ namespace internals
          * @param PID Configured custom product ID
          * @param usb_enable if true and available, USB connectivity is enabled
          * @param ble_enable if true and available, BLE connectivity is enabled
+         * @param exclusive if true, any previous connection is dropped when
+         *                  another comes
          */
         void begin(
             std::string deviceName,
@@ -289,7 +291,8 @@ namespace internals
             uint16_t VID,
             uint16_t PID,
             bool usb_enable = true,
-            bool ble_enable = true);
+            bool ble_enable = true,
+            bool exclusive = false);
 
         /**
          * @brief Support for a custom PID/VID

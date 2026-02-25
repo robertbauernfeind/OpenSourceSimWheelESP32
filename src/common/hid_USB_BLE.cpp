@@ -47,9 +47,16 @@
 #error Your board does not support BLE nor USB
 #endif
 
+// This is the current interface being used,
+// either DUMMY (no connection), USB or BLE.
+// Other values are not permitted.
 static Connectivity current_connectivity = Connectivity::DUMMY;
+// BLE connection status
 static bool ble_connected = false;
+// USB connection status
 static bool usb_connected = false;
+// USB priority over BLE
+static bool usb_priority = false;
 
 // Related to automatic shutdown
 static esp_timer_handle_t autoPowerOffTimer = nullptr;
@@ -226,7 +233,7 @@ void onNimBLEOutputReport(
 #include "HIDKeyboardTypes.h"
 #include "sdkconfig.h"
 #include "esp_gap_ble_api.h"
-#include <vector>
+#include <map>
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -420,11 +427,40 @@ inline void startBleAdvertising()
 #endif
 }
 
+inline void stopBleAdvertising()
+{
+#if CONFIG_NIMBLE_ENABLED
+    if (BLEDevice::initialized())
+        BLEAdvertising::stop();
+#elif CONFIG_BLUEDROID_ENABLED
+    if (hidDevice != nullptr)
+        BLEDevice::stopAdvertising();
+#endif
+}
+
+inline void dropBLEconnection()
+{
+#if CONFIG_NIMBLE_ENABLED
+    if (BLEDevice::initialized())
+        BLEAdvertising::disconnect();
+#elif CONFIG_BLUEDROID_ENABLED
+    if (pServer != nullptr)
+    {
+        std::map<uint16_t, conn_status_t> devices =
+            pServer->getPeerDevices(false);
+        for (auto device : devices)
+            pServer->disconnect(device.first);
+    }
+#endif
+}
+
 void onStart()
 {
     ble_connected = false;
     usb_connected = false;
     OnDisconnected::notify();
+    // Delay advertising a bit to have time to detect USB connection
+    // vTaskDelay(pdMS_TO_TICKS(800));
     startBleAdvertising();
     start_shutdown_timer();
 }
@@ -445,13 +481,17 @@ void onBleConnectionStatus(bool connected)
     else
     {
         ble_connected = false;
-        startBleAdvertising();
         if (usb_connected)
+        {
             current_connectivity = Connectivity::USB;
-        else
+            if (!usb_priority)
+                startBleAdvertising();
+        }
+        else // if (!usb_connected)
         {
             current_connectivity = Connectivity::DUMMY;
             OnDisconnected::notify();
+            startBleAdvertising();
             start_shutdown_timer();
         }
     }
@@ -465,10 +505,17 @@ void onUsbConnectionStatus(bool connected)
     {
         stop_shutdown_timer();
         usb_connected = true;
+        if (usb_priority)
+            stopBleAdvertising();
         if (current_connectivity == Connectivity::DUMMY)
         {
             current_connectivity = Connectivity::USB;
             OnConnected::notify();
+        }
+        else if (usb_priority) // && (current_connectivity==Connectivity::BLE)
+        {
+            current_connectivity = Connectivity::USB;
+            dropBLEconnection();
         }
     }
     else
@@ -480,6 +527,7 @@ void onUsbConnectionStatus(bool connected)
         {
             current_connectivity = Connectivity::DUMMY;
             OnDisconnected::notify();
+            startBleAdvertising();
             start_shutdown_timer();
         }
     }
@@ -499,9 +547,11 @@ void internals::hid::begin(
     uint16_t vendorID,
     uint16_t productID,
     bool usb_enable,
-    bool ble_enable)
+    bool ble_enable,
+    bool exclusive)
 {
     internals::hid::common::onReset(inputReportData);
+    usb_priority = exclusive;
 
 #if USB_AVAILABLE
     if (usb_enable)

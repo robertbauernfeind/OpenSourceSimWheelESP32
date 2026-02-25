@@ -127,6 +127,7 @@ std::string DEVICE_MANUFACTURER = "Me";
 // [ES] Descomente la opción elegida y comente las demás
 
 static Connectivity connectivity_choice = Connectivity::USB_BLE; // default
+// static Connectivity connectivity_choice = Connectivity::USB_BLE_EXCLUSIVE;
 // static Connectivity connectivity_choice = Connectivity::USB;
 // static Connectivity connectivity_choice = Connectivity::BLE;
 
