@@ -131,7 +131,7 @@ function New-SymLink {
     catch [UnauthorizedAccessException] {
         # No admin privileges, copy files instead
         Copy-Item $ExistingFile -Destination $LinkFile -Force
-        # Set this copy to read-only in order to prevent any confussion
+        # Set this copy to read-only in order to prevent any confusion
         # when editing files
         Set-ItemProperty -Path $LinkFile -Name IsReadOnly -Value $true
     }
@@ -162,54 +162,47 @@ function Get-IncludesFileContent {
     }
 }
 
+function Rename-OldIncludes {
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [string]$original
+    )
+    process {
+        if ($original.Equals("hid_ESPBLE.cpp") -or `
+                $original.Equals("hid_BLE.cpp") -or `
+                $original.Equals("hid_USB.cpp")) {
+            "hid_USB_BLE.cpp"
+        }
+        elseif ($original.Equals("hid_NimBLE.cpp")) {
+            "hid_h2zero.cpp"
+        }
+        else {
+            $original
+        }
+    }
+}
+
 function Push-AuxiliaryFiles {
     param (
         [Parameter(Mandatory, ValueFromPipeline)]
         [string]$original
     )
     begin {
-        $uses_hid_ble = $false
-        $uses_hid_espble = $false
-        $uses_hid_nimble = $false
-        $uses_hid_h2zero = $false
+        $uses_hid_usb_ble = $false
         $uses_nimble_wrapper = $false
     }
     process {
-        if ($original.Equals("hid_ESPBLE.cpp")) {
-            $uses_hid_espble = $true
-        }
-        if ($original.Equals("hid_BLE.cpp")) {
-            $uses_hid_ble = $true
-        }
         if ($original.Equals("hid_USB_BLE.cpp")) {
-            $uses_hid_ble = $true
-        }
-        if ($original.Equals("hid_NimBLE.cpp")) {
-            $uses_hid_nimble = $true
-        }
-        if ($original.Equals("hid_h2zero.cpp")) {
-            $uses_hid_h2zero = $true
+            $uses_hid_usb_ble = $true
         }
         if ($original.Equals("NimBLEWrapper.cpp")) {
             $uses_nimble_wrapper = $true
         }
-        if ((-not $original.Equals("hid_NimBLE.cpp")) -and `
-            (-not $original.Equals("hid_ESPBLE.cpp")) ) {
-            $original
-        }
+        $original
     }
     end {
-        if ($uses_hid_nimble -and (-not $uses_hid_h2zero)) {
-            "hid_h2zero.cpp"
-        }
-        else {
-            if ($uses_hid_espble -and (-not $uses_hid_ble)) {
-                "hid_BLE.cpp"
-                $uses_hid_ble = $true
-            }
-            if ($uses_hid_ble -and (-not $uses_nimble_wrapper)) {
-                "NimBLEWrapper.cpp"
-            }
+        if ($uses_hid_usb_ble -and (-not $uses_nimble_wrapper)) {
+            "NimBLEWrapper.cpp"
         }
     }
 }
@@ -273,7 +266,8 @@ try {
 
         Write-Info "Creating links to filenames found in '$_includesFile'"
         $includesContent = Get-IncludesFileContent -LiteralPath $specFile
-        $includesContent = $includesContent | Push-AuxiliaryFiles
+        $includesContent = `
+            $includesContent | Rename-OldIncludes | Push-AuxiliaryFiles
         if ($includesContent.Length -eq 0) {
             Write-Warning "'$_includesFile' is empty"
         }

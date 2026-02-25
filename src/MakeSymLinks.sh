@@ -23,6 +23,11 @@
 #     Licensed under the EUPL
 #############################################################################
 
+# # # IMPORTANT NOTE # # #
+# If you get the message:
+# -bash: ./MakeSymLinks.sh: cannot execute: required file not found
+# edit this file and change line endings to LF
+
 THIS_PATH="$(dirname "$(realpath "$0")")"
 INCLUDE_PATH="$THIS_PATH/include"
 COMMON_PATH="$THIS_PATH/common"
@@ -33,10 +38,7 @@ header_files=$(find "$INCLUDE_PATH" -type f -name "*.h??")
 get_required_links() {
     local path="$1"
     local links=()
-    local uses_hid_ble=false
-    local uses_hid_espble=false
-    local uses_hid_nimble=false
-    local uses_hid_h2zero=false
+    local uses_hid_usb_ble=false
     local uses_nimble_wrapper=false
     file_content=$(<"$path/$INCLUDES_FILE")
     if [ -n "$file_content" ] && [ "${file_content: -1}" != $'\n' ]; then
@@ -45,41 +47,28 @@ get_required_links() {
     while IFS= read -r line; do
         line=$(echo "$line" | sed 's/\r//;s/^[[:space:]]*//;s/[[:space:]]*$//')
         if [[ -n "$line" ]]; then
-            if [ "$line" = "hid_ESPBLE.cpp" ]; then
-                uses_hid_espble=true
-            fi
-            if [ "$line" = "hid_BLE.cpp" ]; then
-                uses_hid_ble=true
-            fi
-            if [ "$line" = "hid_USB_BLE.cpp" ]; then
-                uses_hid_ble=true
+            # Rename old includes for backwards compatibility
+            if [ "$line" = "hid_ESPBLE.cpp" ] || [ "$line" = "hid_BLE.cpp" ] || [ "$line" = "hid_USB.cpp" ]; then
+                line="hid_USB_BLE.cpp"
             fi
             if [ "$line" = "hid_NimBLE.cpp" ]; then
-                uses_hid_nimble=true
+                line="hid_h2zero.cpp"
             fi
-            if [ "$line" = "hid_h2zero.cpp" ]; then
-                uses_hid_h2zero=true
-            fi
+            # Check if the user forgot to include some files
             if [ "$line" = "NimBLEWrapper.cpp" ]; then
                 uses_nimble_wrapper=true
             fi
-            if [ "$line" != "hid_NimBLE.cpp" ] && [ "$line" != "hid_ESPBLE.cpp" ]; then
-                links+=("$COMMON_PATH/$line")
+            if [ "$line" = "hid_USB_BLE.cpp" ]; then
+                uses_hid_usb_ble=true
             fi
+            links+=("$COMMON_PATH/$line")
         fi
     done <<<"$file_content"
     echo "${links[@]}"
     echo $header_files
-    if [ "$uses_hid_nimble" = true ] && [ "$uses_hid_h2zero" = false ]; then
-        echo "$COMMON_PATH/hid_h2zero.cpp"
-    else
-        if [ "$uses_hid_espble" = true ] && [ "$uses_hid_ble" = false ]; then
-            echo "$COMMON_PATH/hid_BLE.cpp"
-            uses_hid_ble=true
-        fi
-        if [ "$uses_hid_ble" = true ] && [ "$uses_nimble_wrapper" = false ]; then
-            echo "$COMMON_PATH/NimBLEWrapper.cpp"
-        fi
+    # Push missing files
+    if [ "$uses_hid_usb_ble" = true ] && [ "$uses_nimble_wrapper" = false ]; then
+        echo "$COMMON_PATH/NimBLEWrapper.cpp"
     fi
 }
 
