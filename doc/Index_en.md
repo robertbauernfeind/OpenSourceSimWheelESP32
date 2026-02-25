@@ -13,6 +13,7 @@
 - [Know your ESP32 DevKit board](./hardware/DevKits_en.md)
 - [Prepare the source code for compilation and uploading](./firmware/sourcesSetup_en.md)
 - [How to customize in order to build your own hardware and firmware setup](./hardware/subsystems/CustomizeHowto_en.md)
+  - [Setting up connectivity (USB/BLE/both) - quick link](./hardware/subsystems/CustomizeHowto_en.md#connectivity)
   - [Migrating your custom firmware to version 7 from a previous version](./migrate_to_v7.md)
 - [Troubleshooting](./Troubleshooting_en.md)
 

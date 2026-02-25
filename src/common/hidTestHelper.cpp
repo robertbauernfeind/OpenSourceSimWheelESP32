@@ -321,7 +321,7 @@ void setup()
 #elif USB_ONLY
     hid::connectivity(Connectivity::USB);
 #else
-    hid::connectivity(Connectivity::USB_BLE);
+    hid::connectivity(Connectivity::USB_BLE_EXCLUSIVE);
 #endif
     hid::configure(
         HID_TESTER,
