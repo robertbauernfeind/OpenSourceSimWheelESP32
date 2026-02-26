@@ -339,6 +339,10 @@ static Connectivity connectivity_choice = Connectivity::USB_BLE;
 // static Connectivity connectivity_choice = Connectivity::DUMMY;
 ```
 
+If your custom firmware is not based on `CustomSetup.ino`,
+place a call to `hid::connectivity()` and pass the connectivity option
+as parameter.
+
 #### Connectivity options explained
 
 - `Connectivity::DUMMY`: no connectivity (for troubleshooting).
@@ -363,13 +367,13 @@ static Connectivity connectivity_choice = Connectivity::USB_BLE;
 
   - The firmware will silently fall back to the second connected interface
     when the first is disconnected.
-  - BLE discovery will take place even if there is an USB connection.
+  - BLE advertising will take place even if there is an USB connection.
 
 - `Connectivity::USB_BLE_EXCLUSIVE`: combined BLE and USB.
   The same as the previous option but...
 
   - USB has priority over BLE.
-  - BLE discovery is disabled if there is an USB connection.
+  - BLE advertising is disabled if there is an USB connection.
   - BLE is forcedly disconnected when an USB connection takes place.
 
 > [!TIP]
