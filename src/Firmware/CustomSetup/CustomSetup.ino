@@ -25,195 +25,68 @@
 // [EN] Set a name for this device between double quotes
 // [ES] Indique un nombre para este dispositivo entre comillas
 
-std::string DEVICE_NAME = "Custom steering wheel";
+std::string DEVICE_NAME = "BAR_G29_SteeringWheel";
 
 // [EN] Set a manufacturer's name for this device between double quotes
 // [ES] Indique un nombre para el fabricante de este dispositivo entre comillas
 
-std::string DEVICE_MANUFACTURER = "Me";
-
-/* -----------------------------------------------------------------
- >>>> [EN] DEEP SLEEP MODE
- >>>> [ES] MODO DE SUEÑO PROFUNDO
------------------------------------------------------------------- */
-
-// [EN] Set a GPIO number for "wake up".
-//      Comment out if not required, or set an RTC-capable GPIO number for wake up.
-// [ES] Indique el número de GPIO para la señal "despertar"
-//      Comente la línea si no hay necesidad de entrar en sueño profundo, o bien,
-//      indique un número de GPIO con capacidad RTC para despertar del sueño.
-
-// #define WAKE_UP_PIN <here>
-
-// [EN] Substitute <here> with a GPIO number or alias
-// [ES] Sustituya <here> con un número de pin o su alias
-
-/* -----------------------------------------------------------------
- >>>> [EN] POWER LATCH SUBSYSTEM
- >>>> [ES] SUBSISTEMA DE CERROJO DE ENERGÍA
------------------------------------------------------------------- */
-
-// [EN] Set an output-capable GPIO number for the "POWER_LATCH" pin.
-//      Comment out if there is no external power latch circuit.
-// [ES] Indique el número de GPIO para la señal "POWER_LATCH"
-//      Comente la línea si no hay circuito externo de power latch.
-
-// #define POWER_LATCH <here>
-
-// [EN] Substitute <here> with a GPIO number or alias
-// [ES] Sustituya <here> con un número de pin o su alias
-
-// [EN] Set a latch mode
-// [ES] Ajuste un mode de activación
-
-#define LATCH_MODE PowerLatchMode::POWER_OPEN_DRAIN
-
-// [EN] Set a delay (in milliseconds) to wait for the latch circuit
-//      to do its magic (optional)
-// [ES] Ajuste un retardo (en milisegundos) a esperar para
-//      que el circuito haga su magia
-
-#define LATCH_POWEROFF_DELAY 3000
-
-/* -----------------------------------------------------------------
- >>>> [EN] BATTERY MONITOR SUBSYSTEM
- >>>> [ES] SUBSISTEMA DE MONITORIZACIÓN DE BATERÍA
------------------------------------------------------------------- */
-
-// [EN] Comment out the following line if a "fuel gauge" is NOT in place
-// [ES] Comentar la siguiente linea si NO existe un "fuel gauge"
-
-// #define ENABLE_FUEL_GAUGE
-
-// [EN] Comment out the following line if the battery monitor subsystem is NOT in place
-// [ES] Comentar la siguiente linea si NO hay subsistema de monitorización de batería
-#define ENABLE_BATTERY_MONITOR
-
-#ifdef ENABLE_BATTERY_MONITOR
-// [EN] Set an output-capable GPIO number for the "battEN" pin.
-// [ES] Indique el número de GPIO para el pin "battEN".
-
-#define BATTERY_ENABLE_READ_GPIO GPIO_NUM_1
-
-// [EN] Set an ADC-capable GPIO number for the "battREAD" pin.
-// [ES] Indique el número de GPIO para el pin ADC de "battREAD".
-
-#define BATTERY_READ_GPIO GPIO_NUM_2
-
-#endif // ENABLE_BATTERY_MONITOR
-
-/* -----------------------------------------------------------------
- >>>> [EN] DEVICE IDENTIFICATION
- >>>> [ES] IDENTIFICATION DEL DISPOSITIVO
------------------------------------------------------------------- */
-
-// [EN] Uncomment the following lines to set a custom VID/PID
-// [ES] Descomente la siguiente linea para ajustar el VID/PID a medida
-
-// #define BLE_CUSTOM_VID <here>
-// #define BLE_CUSTOM_PID <here>
-
-// [EN] Substitute <here> with a non-zero 16-bits number as
-//      a custom vendor/product ID
-// [ES] Sustituya <here> con un número de 16 bits distinto de cero
-//      como identificador de fabricante/producto a medida
-
-/* -----------------------------------------------------------------
- >>>> [EN] CONNECTIVITY CHOICE
- >>>> [ES] ELECCIÓN DE CONECTIVIDAD
------------------------------------------------------------------- */
-
-// [EN] Uncomment the choosen option and comment out the others
-// [ES] Descomente la opción elegida y comente las demás
-
-static Connectivity connectivity_choice = Connectivity::USB_BLE; // default
-// static Connectivity connectivity_choice = Connectivity::USB_BLE_EXCLUSIVE;
-// static Connectivity connectivity_choice = Connectivity::USB;
-// static Connectivity connectivity_choice = Connectivity::BLE;
-
-//      [EN] For troubleshooting only
-//      [ES] Sólo para diagnóstico de problemas
-// static Connectivity connectivity_choice = Connectivity::DUMMY;
-
-//------------------------------------------------------------------
-// Globals
-//------------------------------------------------------------------
+std::string DEVICE_MANUFACTURER = "BAR";
 
 //------------------------------------------------------------------
 // Setup
 //------------------------------------------------------------------
 
-void simWheelSetup()
-{
-    // [EN] Example code. Delete and fill with your own code.
-    // [ES] Código de ejemplo. Bórrelo y ponga el suyo.
+void simWheelSetup() {
+  ShiftRegisterChip chip1, chip2, chip3;
+  chip1[SR8Pin::A] = 1;
+  chip1[SR8Pin::B] = 2;
+  chip1[SR8Pin::C] = 3;
+  chip1[SR8Pin::D] = 4;
+  chip1[SR8Pin::E] = 5;
+  chip1[SR8Pin::F] = 6;
+  chip1[SR8Pin::G] = 7;
+  chip1[SR8Pin::H] = 8;
 
-    inputs::addRotaryEncoder(GPIO_NUM_36, GPIO_NUM_39, 25, 26);
-    inputs::addRotaryEncoder(GPIO_NUM_35, GPIO_NUM_32, 27, 28);
-    inputs::addRotaryEncoder(GPIO_NUM_25, GPIO_NUM_26, 29, 30);
-    inputs::addRotaryEncoder(GPIO_NUM_14, GPIO_NUM_18, 31, 32);
-    inputs::addButton(GPIO_NUM_34, 33);
-    inputs::addButton(GPIO_NUM_33, 34);
-    inputs::addButton(GPIO_NUM_27, 35);
+  chip2[SR8Pin::A] = 9;
+  chip2[SR8Pin::B] = 10;
+  chip2[SR8Pin::C] = 11;
+  chip2[SR8Pin::D] = 12;
+  chip2[SR8Pin::E] = 13;
+  chip2[SR8Pin::F] = 14;
+  chip2[SR8Pin::G] = 15;
+  chip2[SR8Pin::H] = 16;
 
-    inputHub::clutch::inputs(33, 34);
-    inputHub::clutch::bitePointInputs(31, 32); // Rotary 4
-    inputHub::dpad::inputs(25, 26, 27, 28);
-    inputHub::altButtons::inputs({35});
+  chip3[SR8Pin::A] = 17;
+  chip3[SR8Pin::B] = 18;
+  chip3[SR8Pin::C] = 19;
+  chip3[SR8Pin::D] = 20;
+  chip3[SR8Pin::E] = 21;
+  chip3[SR8Pin::F] = 22;
+  chip3[SR8Pin::G] = 23;
+  chip3[SR8Pin::H] = 24;
+
+  inputs::add74HC165NChain(25, 33, 32, { chip1, chip2, chip3 }, 24, false);
 }
 
 //------------------------------------------------------------------
 
-void customFirmware()
-{
+void customFirmware() {
+  simWheelSetup();
+  hid::configure(
+    DEVICE_NAME,
+    DEVICE_MANUFACTURER);
 
-#ifdef WAKE_UP_PIN
-    power::configureWakeUp(WAKE_UP_PIN);
-#endif
-
-#ifdef POWER_LATCH
-    power::configurePowerLatch(
-        POWER_LATCH,
-        LATCH_MODE,
-        LATCH_POWEROFF_DELAY);
-#endif
-
-    simWheelSetup();
-    hid::configure(
-        DEVICE_NAME,
-        DEVICE_MANUFACTURER,
-        true
-#if defined(BLE_CUSTOM_VID)
-        ,
-        BLE_CUSTOM_VID
-#if defined(BLE_CUSTOM_PID)
-        ,
-        BLE_CUSTOM_PID
-#endif
-#endif
-    );
-
-    hid::connectivity(connectivity_choice);
-
-#if defined(ENABLE_FUEL_GAUGE)
-    batteryMonitor::configure();
-#elif defined(ENABLE_BATTERY_MONITOR)
-    batteryMonitor::configure(
-        BATTERY_READ_GPIO,
-        BATTERY_ENABLE_READ_GPIO);
-#endif
+  hid::connectivity(Connectivity::BLE);
 }
 
 //------------------------------------------------------------------
 // Arduino entry point
 //------------------------------------------------------------------
 
-void setup()
-{
-    firmware::run(customFirmware);
+void setup() {
+  firmware::run(customFirmware);
 }
 
-void loop()
-{
-    vTaskDelay(portMAX_DELAY);
+void loop() {
+  vTaskDelay(portMAX_DELAY);
 }
